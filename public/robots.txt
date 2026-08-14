@@ -1,0 +1,6 @@
+```txt
+User-agent: *
+Allow: /
+
+Sitemap: https://forex-trader-website-theta.vercel.app/sitemap.xml
+```
