@@ -1,10 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import "./Admin.css";
 import { supabase } from "./supabaseClient";
 
 function Admin() {
-
   // ==================================================
   // ACTIVE TAB
   // ==================================================
@@ -99,29 +99,57 @@ function Admin() {
   // ==================================================
 
   useEffect(() => {
-
+    // ==================================================
     // LOAD REELS
+    // ==================================================
 
     const savedReels =
       JSON.parse(localStorage.getItem("fxReels")) || [];
 
     setReels(savedReels);
 
+    // ==================================================
+    // LOAD PROFILE FROM SUPABASE
+    // ==================================================
 
-    // LOAD PROFILE
+    const loadProfile = async () => {
+      const { data, error } = await supabase
+        .from("site_profile")
+        .select("*")
+        .eq("id", 1)
+        .single();
 
-    const savedProfile =
-      JSON.parse(localStorage.getItem("fxProfile"));
+      if (error) {
+        console.error("Supabase profile load error:", error);
+        return;
+      }
 
-    if (savedProfile) {
+      if (data) {
+        const loadedProfile = {
+          name: data.name || defaultProfile.name,
+          title: data.title || defaultProfile.title,
+          bio: data.bio || defaultProfile.bio,
+          experience:
+            data.experience || defaultProfile.experience,
+          community:
+            data.community || defaultProfile.community,
+          educationPosts:
+            data.education_posts ||
+            defaultProfile.educationPosts,
+          profileImage:
+            data.profile_image || ""
+        };
 
-      setProfile(savedProfile);
-      setProfileForm(savedProfile);
+        setProfile(loadedProfile);
+        setProfileForm(loadedProfile);
+      }
+    };
 
-    }
+    loadProfile();
 
-
+    // ==================================================
     // LOAD COMMUNITY
+    // ==================================================
 
     const savedCommunity =
       JSON.parse(localStorage.getItem("fxCommunity"));
@@ -136,46 +164,48 @@ function Admin() {
       setCommunityForm(mergedCommunity);
     }
 
-
+    // ==================================================
     // LOAD ENQUIRIES
+    // ==================================================
 
-   const loadEnquiries = async () => {
+    const loadEnquiries = async () => {
+      const { data, error } = await supabase
+        .from("enquiries")
+        .select("*")
+        .order("created_at", {
+          ascending: false
+        });
 
-  const { data, error } = await supabase
-    .from("enquiries")
-    .select("*")
-    .order("created_at", { ascending: false });
+      if (error) {
+        console.error(
+          "Supabase enquiries error:",
+          error
+        );
+        return;
+      }
 
-  if (error) {
-    console.error("Supabase enquiries error:", error);
-    return;
-  }
+      setEnquiries(data || []);
+    };
 
-  setEnquiries(data || []);
-};
+    loadEnquiries();
 
-loadEnquiries();
+    // ==================================================
     // LOAD TRADING RESULTS
+    // ==================================================
 
     const savedResults =
-      JSON.parse(localStorage.getItem("fxTradingResults"));
+      JSON.parse(
+        localStorage.getItem("fxTradingResults")
+      );
 
     if (savedResults) {
-
-      // New format
       if (
         savedResults.weekly &&
         savedResults.monthly &&
         savedResults.yearly
       ) {
-
         setTradingResults(savedResults);
-
       } else {
-
-        // Old format support
-        // जर आधीचे monthly data localStorage मध्ये असेल
-
         setTradingResults({
           weekly: {
             result: "+3.8%",
@@ -184,9 +214,15 @@ loadEnquiries();
           },
 
           monthly: {
-            result: savedResults.monthlyResult || "+12.4%",
-            winRate: savedResults.winRate || "78%",
-            totalTrades: savedResults.totalTrades || "124"
+            result:
+              savedResults.monthlyResult ||
+              "+12.4%",
+            winRate:
+              savedResults.winRate ||
+              "78%",
+            totalTrades:
+              savedResults.totalTrades ||
+              "124"
           },
 
           yearly: {
@@ -195,11 +231,8 @@ loadEnquiries();
             totalTrades: "520"
           }
         });
-
       }
-
     }
-
   }, []);
 
   // ==================================================
@@ -207,14 +240,12 @@ loadEnquiries();
   // ==================================================
 
   const handleChange = (e) => {
-
     const { name, value } = e.target;
 
     setForm((prev) => ({
       ...prev,
       [name]: value
     }));
-
   };
 
   // ==================================================
@@ -222,7 +253,6 @@ loadEnquiries();
   // ==================================================
 
   const handleCoverImage = (e) => {
-
     const file = e.target.files[0];
 
     if (!file) {
@@ -230,32 +260,25 @@ loadEnquiries();
     }
 
     if (!file.type.startsWith("image/")) {
-
       alert("Please select an image file.");
       return;
-
     }
 
     if (file.size > 2 * 1024 * 1024) {
-
       alert("Image size should be less than 2 MB.");
       return;
-
     }
 
     const reader = new FileReader();
 
     reader.onload = () => {
-
       setForm((prev) => ({
         ...prev,
         coverImage: reader.result
       }));
-
     };
 
     reader.readAsDataURL(file);
-
   };
 
   // ==================================================
@@ -263,51 +286,35 @@ loadEnquiries();
   // ==================================================
 
   const handleAddReel = (e) => {
-
     e.preventDefault();
 
     if (!form.title.trim()) {
-
       alert("Please enter reel title.");
       return;
-
     }
 
     if (!form.url.trim()) {
-
       alert("Please enter Instagram Reel URL.");
       return;
-
     }
 
     if (!form.url.includes("instagram.com")) {
-
       alert("Please enter a valid Instagram URL.");
       return;
-
     }
 
     if (!form.coverImage) {
-
       alert("Please upload Reel cover image.");
       return;
-
     }
 
     const newReel = {
-
       id: Date.now(),
-
       title: form.title,
-
       category: form.category,
-
       url: form.url,
-
       coverImage: form.coverImage,
-
       createdAt: new Date().toLocaleDateString()
-
     };
 
     const updatedReels = [
@@ -337,7 +344,6 @@ loadEnquiries();
     }
 
     alert("Instagram Reel added successfully!");
-
   };
 
   // ==================================================
@@ -345,7 +351,6 @@ loadEnquiries();
   // ==================================================
 
   const handleDelete = (id) => {
-
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this reel?"
     );
@@ -363,7 +368,6 @@ loadEnquiries();
       "fxReels",
       JSON.stringify(updatedReels)
     );
-
   };
 
   // ==================================================
@@ -371,14 +375,12 @@ loadEnquiries();
   // ==================================================
 
   const handleProfileChange = (e) => {
-
     const { name, value } = e.target;
 
     setProfileForm((prev) => ({
       ...prev,
       [name]: value
     }));
-
   };
 
   // ==================================================
@@ -386,7 +388,6 @@ loadEnquiries();
   // ==================================================
 
   const handleProfileImage = (e) => {
-
     const file = e.target.files[0];
 
     if (!file) {
@@ -394,76 +395,99 @@ loadEnquiries();
     }
 
     if (!file.type.startsWith("image/")) {
-
       alert("Please select an image file.");
       return;
-
     }
 
     if (file.size > 2 * 1024 * 1024) {
-
-      alert("Profile image should be less than 2 MB.");
+      alert(
+        "Profile image should be less than 2 MB."
+      );
       return;
-
     }
 
     const reader = new FileReader();
 
     reader.onload = () => {
-
       setProfileForm((prev) => ({
         ...prev,
         profileImage: reader.result
       }));
-
     };
 
     reader.readAsDataURL(file);
-
   };
 
   // ==================================================
-  // SAVE PROFILE
+  // SAVE PROFILE TO SUPABASE
   // ==================================================
 
-  const handleSaveProfile = (e) => {
-
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
 
     if (!profileForm.name.trim()) {
-
       alert("Please enter your name.");
       return;
-
     }
 
     if (!profileForm.title.trim()) {
-
       alert("Please enter profile title.");
       return;
-
     }
 
     if (!profileForm.bio.trim()) {
-
       alert("Please enter your bio.");
       return;
-
     }
 
     const updatedProfile = {
       ...profileForm
     };
 
+    const { error } = await supabase
+      .from("site_profile")
+      .upsert(
+        {
+          id: 1,
+          name: updatedProfile.name,
+          title: updatedProfile.title,
+          bio: updatedProfile.bio,
+          experience: updatedProfile.experience,
+          community: updatedProfile.community,
+          education_posts:
+            updatedProfile.educationPosts,
+          profile_image:
+            updatedProfile.profileImage,
+          updated_at:
+            new Date().toISOString()
+        },
+        {
+          onConflict: "id"
+        }
+      );
+
+    if (error) {
+      console.error(
+        "Supabase profile save error:",
+        error
+      );
+
+      alert(
+        "Could not save profile. Please check Supabase."
+      );
+
+      return;
+    }
+
     setProfile(updatedProfile);
 
+    // Keep local copy too
     localStorage.setItem(
       "fxProfile",
       JSON.stringify(updatedProfile)
     );
 
     alert("Profile updated successfully!");
-
   };
 
   // ==================================================
@@ -471,7 +495,6 @@ loadEnquiries();
   // ==================================================
 
   const handleSaveResults = (e) => {
-
     e.preventDefault();
 
     localStorage.setItem(
@@ -479,8 +502,9 @@ loadEnquiries();
       JSON.stringify(tradingResults)
     );
 
-    alert("Trading results updated successfully!");
-
+    alert(
+      "Trading results updated successfully!"
+    );
   };
 
   // ==================================================
@@ -488,14 +512,12 @@ loadEnquiries();
   // ==================================================
 
   const handleCommunityChange = (e) => {
-
     const { name, value } = e.target;
 
     setCommunityForm((prev) => ({
       ...prev,
       [name]: value
     }));
-
   };
 
   // ==================================================
@@ -503,26 +525,33 @@ loadEnquiries();
   // ==================================================
 
   const handleSaveCommunity = (e) => {
-
     e.preventDefault();
 
     if (!communityForm.eyebrow.trim()) {
-      alert("Please enter a community eyebrow.");
+      alert(
+        "Please enter a community eyebrow."
+      );
       return;
     }
 
     if (!communityForm.title.trim()) {
-      alert("Please enter a community title.");
+      alert(
+        "Please enter a community title."
+      );
       return;
     }
 
     if (!communityForm.description.trim()) {
-      alert("Please enter a community description.");
+      alert(
+        "Please enter a community description."
+      );
       return;
     }
 
     if (!communityForm.buttonText.trim()) {
-      alert("Please enter community button text.");
+      alert(
+        "Please enter community button text."
+      );
       return;
     }
 
@@ -537,101 +566,117 @@ loadEnquiries();
       JSON.stringify(updatedCommunity)
     );
 
-    window.dispatchEvent(new Event("fxCommunityUpdated"));
+    window.dispatchEvent(
+      new Event("fxCommunityUpdated")
+    );
 
-    alert("Community section updated successfully!");
-
+    alert(
+      "Community section updated successfully!"
+    );
   };
 
   // ==================================================
   // ENQUIRIES
   // ==================================================
 
-const markEnquiryRead = async (id) => {
+  const markEnquiryRead = async (id) => {
+    const { error } = await supabase
+      .from("enquiries")
+      .update({
+        status: "Reviewed"
+      })
+      .eq("id", id);
 
-  const { error } = await supabase
-    .from("enquiries")
-    .update({
-      status: "Reviewed"
-    })
-    .eq("id", id);
+    if (error) {
+      console.error(
+        "Supabase update error:",
+        error
+      );
 
-  if (error) {
-    console.error("Supabase update error:", error);
-    alert("Could not update enquiry.");
-    return;
-  }
+      alert("Could not update enquiry.");
+      return;
+    }
 
-  setEnquiries((previous) =>
-    previous.map((enquiry) =>
-      enquiry.id === id
-        ? { ...enquiry, status: "Reviewed" }
-        : enquiry
-    )
-  );
-};
+    setEnquiries((previous) =>
+      previous.map((enquiry) =>
+        enquiry.id === id
+          ? {
+              ...enquiry,
+              status: "Reviewed"
+            }
+          : enquiry
+      )
+    );
+  };
 
-const deleteEnquiry = async (id) => {
+  const deleteEnquiry = async (id) => {
+    const shouldDelete = window.confirm(
+      "Delete this enquiry? This action cannot be undone."
+    );
 
-  const shouldDelete = window.confirm(
-    "Delete this enquiry? This action cannot be undone."
-  );
+    if (!shouldDelete) {
+      return;
+    }
 
-  if (!shouldDelete) {
-    return;
-  }
+    const { error } = await supabase
+      .from("enquiries")
+      .delete()
+      .eq("id", id);
 
-  const { error } = await supabase
-    .from("enquiries")
-    .delete()
-    .eq("id", id);
+    if (error) {
+      console.error(
+        "Supabase delete error:",
+        error
+      );
 
-  if (error) {
-    console.error("Supabase delete error:", error);
-    alert("Could not delete enquiry.");
-    return;
-  }
+      alert("Could not delete enquiry.");
+      return;
+    }
 
-  setEnquiries((previous) =>
-    previous.filter((enquiry) => enquiry.id !== id)
-  );
-};
-const clearAllEnquiries = async () => {
+    setEnquiries((previous) =>
+      previous.filter(
+        (enquiry) => enquiry.id !== id
+      )
+    );
+  };
 
-  if (!enquiries.length) {
-    return;
-  }
+  const clearAllEnquiries = async () => {
+    if (!enquiries.length) {
+      return;
+    }
 
-  const shouldClear = window.confirm(
-    "Delete all enquiries? This action cannot be undone."
-  );
+    const shouldClear = window.confirm(
+      "Delete all enquiries? This action cannot be undone."
+    );
 
-  if (!shouldClear) {
-    return;
-  }
+    if (!shouldClear) {
+      return;
+    }
 
-  const { error } = await supabase
-    .from("enquiries")
-    .delete()
-    .not("id", "is", null);
+    const { error } = await supabase
+      .from("enquiries")
+      .delete()
+      .not("id", "is", null);
 
-  if (error) {
-    console.error("Supabase clear enquiries error:", error);
-    alert("Could not delete enquiries.");
-    return;
-  }
+    if (error) {
+      console.error(
+        "Supabase clear enquiries error:",
+        error
+      );
 
-  setEnquiries([]);
-};
+      alert("Could not delete enquiries.");
+      return;
+    }
+
+    setEnquiries([]);
+  };
 
   // ==================================================
   // LOGOUT
   // ==================================================
 
   const handleLogout = () => {
-
     window.location.href = "/admin";
-
   };
 
   // ==================================================
@@ -639,37 +684,39 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const menuItems = [
-
     {
       id: "dashboard",
       label: "Dashboard"
     },
-
     {
       id: "profile",
       label: "Profile"
     },
-
     {
       id: "reels",
       label: "Instagram Reels"
     },
-
     {
       id: "results",
       label: "Trading Results"
     },
-
     {
       id: "community",
       label: "Community"
     },
-
     {
       id: "enquiries",
-      label: `Enquiries${enquiries.length ? ` (${enquiries.filter((enquiry) => enquiry.status === "New").length})` : ""}`
+      label: `Enquiries${
+        enquiries.length
+          ? ` (${
+              enquiries.filter(
+                (enquiry) =>
+                  enquiry.status === "New"
+              ).length
+            })`
+          : ""
+      }`
     }
-
   ];
 
   // ==================================================
@@ -677,13 +724,10 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderDashboard = () => {
-
     return (
       <>
         <div className="admin-header">
-
           <div>
-
             <p className="admin-small-title">
               ADMIN PANEL
             </p>
@@ -691,7 +735,6 @@ const clearAllEnquiries = async () => {
             <h1>
               Dashboard
             </h1>
-
           </div>
 
           <a
@@ -700,16 +743,10 @@ const clearAllEnquiries = async () => {
           >
             View Website →
           </a>
-
         </div>
 
-
-        {/* STATS */}
-
         <div className="admin-stats">
-
           <div className="admin-stat-card">
-
             <span>
               TOTAL REELS
             </span>
@@ -717,12 +754,9 @@ const clearAllEnquiries = async () => {
             <strong>
               {reels.length}
             </strong>
-
           </div>
 
-
           <div className="admin-stat-card">
-
             <span>
               TRADING RESULTS
             </span>
@@ -730,12 +764,9 @@ const clearAllEnquiries = async () => {
             <strong>
               {tradingResults.monthly.totalTrades}
             </strong>
-
           </div>
 
-
           <div className="admin-stat-card">
-
             <span>
               WEBSITE
             </span>
@@ -743,32 +774,27 @@ const clearAllEnquiries = async () => {
             <strong className="status-live">
               LIVE
             </strong>
-
           </div>
 
           <div className="admin-stat-card admin-enquiry-stat">
-
             <span>
               NEW ENQUIRIES
             </span>
 
             <strong>
-              {enquiries.filter((enquiry) => enquiry.status === "New").length}
+              {
+                enquiries.filter(
+                  (enquiry) =>
+                    enquiry.status === "New"
+                ).length
+              }
             </strong>
-
           </div>
-
         </div>
 
-
-        {/* PROFILE */}
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 PROFILE
               </p>
@@ -776,36 +802,24 @@ const clearAllEnquiries = async () => {
               <h2>
                 {profile.name}
               </h2>
-
             </div>
-
           </div>
 
-
           <div className="profile-quick-card">
-
             <div className="profile-quick-image">
-
               {profile.profileImage ? (
-
                 <img
                   src={profile.profileImage}
                   alt={profile.name}
                 />
-
               ) : (
-
                 <span>
                   RT
                 </span>
-
               )}
-
             </div>
 
-
             <div>
-
               <h3>
                 {profile.title}
               </h3>
@@ -822,22 +836,13 @@ const clearAllEnquiries = async () => {
               >
                 Edit Profile
               </button>
-
             </div>
-
           </div>
-
         </section>
 
-
-        {/* RECENT REELS */}
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 CONTENT
               </p>
@@ -845,20 +850,15 @@ const clearAllEnquiries = async () => {
               <h2>
                 Recent Instagram Reels
               </h2>
-
             </div>
 
             <span className="reel-count">
               {reels.length} Reels
             </span>
-
           </div>
 
-
           {reels.length === 0 ? (
-
             <div className="empty-reels">
-
               <div className="empty-icon">
                 ◎
               </div>
@@ -879,22 +879,15 @@ const clearAllEnquiries = async () => {
               >
                 + Add Reel
               </button>
-
             </div>
-
           ) : (
-
             <div className="admin-reels-list">
-
               {reels.slice(0, 3).map((reel) => (
-
                 <div
                   className="admin-reel-card"
                   key={reel.id}
                 >
-
                   <div className="admin-reel-thumb">
-
                     <img
                       src={reel.coverImage}
                       alt={reel.title}
@@ -903,12 +896,9 @@ const clearAllEnquiries = async () => {
                     <span>
                       ▶
                     </span>
-
                   </div>
 
-
                   <div className="admin-reel-details">
-
                     <span className="admin-reel-category">
                       {reel.category}
                     </span>
@@ -920,12 +910,9 @@ const clearAllEnquiries = async () => {
                     <small>
                       Added: {reel.createdAt}
                     </small>
-
                   </div>
 
-
                   <div className="admin-reel-actions">
-
                     <a
                       href={reel.url}
                       target="_blank"
@@ -943,22 +930,14 @@ const clearAllEnquiries = async () => {
                     >
                       Delete
                     </button>
-
                   </div>
-
                 </div>
-
               ))}
-
             </div>
-
           )}
-
         </section>
-
       </>
     );
-
   };
 
   // ==================================================
@@ -966,13 +945,10 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderProfile = () => {
-
     return (
       <>
         <div className="admin-header">
-
           <div>
-
             <p className="admin-small-title">
               ADMIN PANEL
             </p>
@@ -980,7 +956,6 @@ const clearAllEnquiries = async () => {
             <h1>
               Profile
             </h1>
-
           </div>
 
           <a
@@ -989,16 +964,11 @@ const clearAllEnquiries = async () => {
           >
             View Website →
           </a>
-
         </div>
 
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 PROFILE INFORMATION
               </p>
@@ -1006,19 +976,14 @@ const clearAllEnquiries = async () => {
               <h2>
                 Edit Your Profile
               </h2>
-
             </div>
-
           </div>
-
 
           <form
             className="reel-form"
             onSubmit={handleSaveProfile}
           >
-
             <div className="admin-field">
-
               <label>
                 Name
               </label>
@@ -1030,12 +995,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleProfileChange}
                 placeholder="Royal Trader"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Profile Title
               </label>
@@ -1047,12 +1009,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleProfileChange}
                 placeholder="Forex Trader • Educator • IB Partner"
               />
-
             </div>
 
-
             <div className="admin-field full-width">
-
               <label>
                 Bio
               </label>
@@ -1064,12 +1023,9 @@ const clearAllEnquiries = async () => {
                 rows="6"
                 placeholder="Write your profile bio..."
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Years Experience
               </label>
@@ -1081,12 +1037,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleProfileChange}
                 placeholder="4+"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Community Members
               </label>
@@ -1098,12 +1051,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleProfileChange}
                 placeholder="1000+"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Educational Posts
               </label>
@@ -1115,12 +1065,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleProfileChange}
                 placeholder="100+"
               />
-
             </div>
 
-
             <div className="admin-field full-width">
-
               <label>
                 Profile Photo
               </label>
@@ -1135,14 +1082,10 @@ const clearAllEnquiries = async () => {
               <span className="upload-help">
                 Upload profile photo. Maximum 2 MB.
               </span>
-
             </div>
 
-
             {profileForm.profileImage && (
-
               <div className="profile-upload-preview">
-
                 <img
                   src={profileForm.profileImage}
                   alt="Profile Preview"
@@ -1151,11 +1094,8 @@ const clearAllEnquiries = async () => {
                 <span>
                   Profile Preview
                 </span>
-
               </div>
-
             )}
-
 
             <button
               type="submit"
@@ -1163,20 +1103,12 @@ const clearAllEnquiries = async () => {
             >
               Save Profile
             </button>
-
           </form>
-
         </section>
 
-
-        {/* PROFILE PREVIEW */}
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 PREVIEW
               </p>
@@ -1184,36 +1116,24 @@ const clearAllEnquiries = async () => {
               <h2>
                 Current Profile
               </h2>
-
             </div>
-
           </div>
 
-
           <div className="profile-preview-card">
-
             <div className="profile-preview-image">
-
               {profile.profileImage ? (
-
                 <img
                   src={profile.profileImage}
                   alt={profile.name}
                 />
-
               ) : (
-
                 <span>
                   RT
                 </span>
-
               )}
-
             </div>
 
-
             <div>
-
               <span className="admin-reel-category">
                 {profile.title}
               </span>
@@ -1225,16 +1145,11 @@ const clearAllEnquiries = async () => {
               <p>
                 {profile.bio}
               </p>
-
             </div>
-
           </div>
-
         </section>
-
       </>
     );
-
   };
 
   // ==================================================
@@ -1242,13 +1157,10 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderReels = () => {
-
     return (
       <>
         <div className="admin-header">
-
           <div>
-
             <p className="admin-small-title">
               ADMIN PANEL
             </p>
@@ -1256,7 +1168,6 @@ const clearAllEnquiries = async () => {
             <h1>
               Instagram Reels
             </h1>
-
           </div>
 
           <a
@@ -1265,11 +1176,7 @@ const clearAllEnquiries = async () => {
           >
             View Website →
           </a>
-
         </div>
-
-
-        {/* ADD REEL */}
 
         <motion.section
           className="admin-section"
@@ -1285,11 +1192,8 @@ const clearAllEnquiries = async () => {
             duration: 0.5
           }}
         >
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 INSTAGRAM CONTENT
               </p>
@@ -1297,19 +1201,14 @@ const clearAllEnquiries = async () => {
               <h2>
                 Add Instagram Reel
               </h2>
-
             </div>
-
           </div>
-
 
           <form
             className="reel-form"
             onSubmit={handleAddReel}
           >
-
             <div className="admin-field">
-
               <label>
                 Reel Title
               </label>
@@ -1321,12 +1220,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleChange}
                 placeholder="Today's Market Analysis"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Category
               </label>
@@ -1336,7 +1232,6 @@ const clearAllEnquiries = async () => {
                 value={form.category}
                 onChange={handleChange}
               >
-
                 <option>
                   Daily Market
                 </option>
@@ -1352,14 +1247,10 @@ const clearAllEnquiries = async () => {
                 <option>
                   Trading Results
                 </option>
-
               </select>
-
             </div>
 
-
             <div className="admin-field full-width">
-
               <label>
                 Instagram Reel URL
               </label>
@@ -1371,12 +1262,9 @@ const clearAllEnquiries = async () => {
                 onChange={handleChange}
                 placeholder="https://www.instagram.com/reel/XXXXXXXX/"
               />
-
             </div>
 
-
             <div className="admin-field full-width">
-
               <label>
                 Reel Cover Image
               </label>
@@ -1391,14 +1279,10 @@ const clearAllEnquiries = async () => {
               <span className="upload-help">
                 Upload Reel cover/screenshot. Maximum 2 MB.
               </span>
-
             </div>
 
-
             {form.coverImage && (
-
               <div className="cover-upload-preview">
-
                 <img
                   src={form.coverImage}
                   alt="Reel Cover Preview"
@@ -1407,11 +1291,8 @@ const clearAllEnquiries = async () => {
                 <span>
                   Cover Preview
                 </span>
-
               </div>
-
             )}
-
 
             <button
               type="submit"
@@ -1419,20 +1300,12 @@ const clearAllEnquiries = async () => {
             >
               + Add Reel
             </button>
-
           </form>
-
         </motion.section>
 
-
-        {/* REEL LIST */}
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 MANAGE CONTENT
               </p>
@@ -1440,20 +1313,15 @@ const clearAllEnquiries = async () => {
               <h2>
                 Your Instagram Reels
               </h2>
-
             </div>
 
             <span className="reel-count">
               {reels.length} Reels
             </span>
-
           </div>
 
-
           {reels.length === 0 ? (
-
             <div className="empty-reels">
-
               <div className="empty-icon">
                 ◎
               </div>
@@ -1465,15 +1333,10 @@ const clearAllEnquiries = async () => {
               <p>
                 Add your first Instagram Reel using the form above.
               </p>
-
             </div>
-
           ) : (
-
             <div className="admin-reels-list">
-
               {reels.map((reel, index) => (
-
                 <motion.div
                   className="admin-reel-card"
                   key={reel.id}
@@ -1489,9 +1352,7 @@ const clearAllEnquiries = async () => {
                     delay: index * 0.05
                   }}
                 >
-
                   <div className="admin-reel-thumb">
-
                     <img
                       src={reel.coverImage}
                       alt={reel.title}
@@ -1500,12 +1361,9 @@ const clearAllEnquiries = async () => {
                     <span>
                       ▶
                     </span>
-
                   </div>
 
-
                   <div className="admin-reel-details">
-
                     <span className="admin-reel-category">
                       {reel.category}
                     </span>
@@ -1521,12 +1379,9 @@ const clearAllEnquiries = async () => {
                     <small>
                       Added: {reel.createdAt}
                     </small>
-
                   </div>
 
-
                   <div className="admin-reel-actions">
-
                     <a
                       href={reel.url}
                       target="_blank"
@@ -1544,22 +1399,14 @@ const clearAllEnquiries = async () => {
                     >
                       Delete
                     </button>
-
                   </div>
-
                 </motion.div>
-
               ))}
-
             </div>
-
           )}
-
         </section>
-
       </>
     );
-
   };
 
   // ==================================================
@@ -1567,13 +1414,10 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderResults = () => {
-
     return (
       <>
         <div className="admin-header">
-
           <div>
-
             <p className="admin-small-title">
               ADMIN PANEL
             </p>
@@ -1581,18 +1425,12 @@ const clearAllEnquiries = async () => {
             <h1>
               Trading Results
             </h1>
-
           </div>
-
         </div>
 
-
         <section className="admin-section">
-
           <div className="admin-section-heading">
-
             <div>
-
               <p>
                 PERFORMANCE
               </p>
@@ -1600,26 +1438,16 @@ const clearAllEnquiries = async () => {
               <h2>
                 Trading Results
               </h2>
-
             </div>
-
           </div>
 
-
-          {/* ==================================================
-              WEEKLY PERFORMANCE
-              ================================================== */}
-
           <div className="trading-period-box">
-
             <h3>
               Weekly Performance
             </h3>
 
             <div className="results-grid">
-
               <div className="result-card">
-
                 <span>
                   WEEKLY RESULT
                 </span>
@@ -1627,12 +1455,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.weekly.result}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   WIN RATE
                 </span>
@@ -1640,12 +1465,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.weekly.winRate}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   TOTAL TRADES
                 </span>
@@ -1653,28 +1475,17 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.weekly.totalTrades}
                 </strong>
-
               </div>
-
             </div>
-
           </div>
 
-
-          {/* ==================================================
-              MONTHLY PERFORMANCE
-              ================================================== */}
-
           <div className="trading-period-box">
-
             <h3>
               Monthly Performance
             </h3>
 
             <div className="results-grid">
-
               <div className="result-card">
-
                 <span>
                   MONTHLY RESULT
                 </span>
@@ -1682,12 +1493,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.monthly.result}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   WIN RATE
                 </span>
@@ -1695,12 +1503,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.monthly.winRate}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   TOTAL TRADES
                 </span>
@@ -1708,28 +1513,17 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.monthly.totalTrades}
                 </strong>
-
               </div>
-
             </div>
-
           </div>
 
-
-          {/* ==================================================
-              YEARLY PERFORMANCE
-              ================================================== */}
-
           <div className="trading-period-box">
-
             <h3>
               Yearly Performance
             </h3>
 
             <div className="results-grid">
-
               <div className="result-card">
-
                 <span>
                   YEARLY RESULT
                 </span>
@@ -1737,12 +1531,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.yearly.result}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   WIN RATE
                 </span>
@@ -1750,12 +1541,9 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.yearly.winRate}
                 </strong>
-
               </div>
 
-
               <div className="result-card">
-
                 <span>
                   TOTAL TRADES
                 </span>
@@ -1763,27 +1551,15 @@ const clearAllEnquiries = async () => {
                 <strong>
                   {tradingResults.yearly.totalTrades}
                 </strong>
-
               </div>
-
             </div>
-
           </div>
-
-
-          {/* ==================================================
-              EDIT TRADING RESULTS
-              ================================================== */}
 
           <form
             className="reel-form"
             onSubmit={handleSaveResults}
           >
-
-            {/* WEEKLY */}
-
             <div className="admin-field">
-
               <label>
                 Weekly Result
               </label>
@@ -1802,12 +1578,9 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="+3.8%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Weekly Win Rate
               </label>
@@ -1826,19 +1599,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="76%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Weekly Total Trades
               </label>
 
               <input
                 type="text"
-                value={tradingResults.weekly.totalTrades}
+                value={
+                  tradingResults.weekly.totalTrades
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1850,21 +1622,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="18"
               />
-
             </div>
 
-
-            {/* MONTHLY */}
-
             <div className="admin-field">
-
               <label>
                 Monthly Result
               </label>
 
               <input
                 type="text"
-                value={tradingResults.monthly.result}
+                value={
+                  tradingResults.monthly.result
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1876,19 +1645,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="+12.4%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Monthly Win Rate
               </label>
 
               <input
                 type="text"
-                value={tradingResults.monthly.winRate}
+                value={
+                  tradingResults.monthly.winRate
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1900,19 +1668,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="78%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Monthly Total Trades
               </label>
 
               <input
                 type="text"
-                value={tradingResults.monthly.totalTrades}
+                value={
+                  tradingResults.monthly.totalTrades
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1924,21 +1691,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="124"
               />
-
             </div>
 
-
-            {/* YEARLY */}
-
             <div className="admin-field">
-
               <label>
                 Yearly Result
               </label>
 
               <input
                 type="text"
-                value={tradingResults.yearly.result}
+                value={
+                  tradingResults.yearly.result
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1950,19 +1714,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="+48.6%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Yearly Win Rate
               </label>
 
               <input
                 type="text"
-                value={tradingResults.yearly.winRate}
+                value={
+                  tradingResults.yearly.winRate
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1974,19 +1737,18 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="81%"
               />
-
             </div>
 
-
             <div className="admin-field">
-
               <label>
                 Yearly Total Trades
               </label>
 
               <input
                 type="text"
-                value={tradingResults.yearly.totalTrades}
+                value={
+                  tradingResults.yearly.totalTrades
+                }
                 onChange={(e) =>
                   setTradingResults({
                     ...tradingResults,
@@ -1998,9 +1760,7 @@ const clearAllEnquiries = async () => {
                 }
                 placeholder="520"
               />
-
             </div>
-
 
             <button
               type="submit"
@@ -2008,14 +1768,10 @@ const clearAllEnquiries = async () => {
             >
               Save Trading Results
             </button>
-
           </form>
-
         </section>
-
       </>
     );
-
   };
 
   // ==================================================
@@ -2023,9 +1779,9 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderEnquiries = () => {
-
     const newCount = enquiries.filter(
-      (enquiry) => enquiry.status === "New"
+      (enquiry) =>
+        enquiry.status === "New"
     ).length;
 
     return (
@@ -2050,43 +1806,66 @@ const clearAllEnquiries = async () => {
         </div>
 
         <section className="admin-section enquiries-section">
-
           <div className="admin-section-heading enquiries-heading">
             <div>
-              <p>1K CONTACT</p>
-              <h2>Enquiry Inbox</h2>
+              <p>
+                1K CONTACT
+              </p>
+
+              <h2>
+                Enquiry Inbox
+              </h2>
             </div>
 
             <div className="enquiry-admin-summary">
-              <span>{enquiries.length} Total</span>
-              <strong>{newCount} New</strong>
+              <span>
+                {enquiries.length} Total
+              </span>
+
+              <strong>
+                {newCount} New
+              </strong>
             </div>
           </div>
 
           {enquiries.length === 0 ? (
-
             <div className="enquiry-empty-state">
-              <div className="enquiry-empty-icon">1K</div>
-              <h3>No enquiries yet</h3>
-              <p>Customer enquiries submitted from the Contact form will appear here.</p>
+              <div className="enquiry-empty-icon">
+                1K
+              </div>
+
+              <h3>
+                No enquiries yet
+              </h3>
+
+              <p>
+                Customer enquiries submitted from the Contact form will appear here.
+              </p>
             </div>
-
           ) : (
-
             <div className="enquiry-list">
               {enquiries.map((enquiry) => (
                 <article
-                  className={`enquiry-admin-card ${enquiry.status === "New" ? "is-new" : ""}`}
+                  className={`enquiry-admin-card ${
+                    enquiry.status === "New"
+                      ? "is-new"
+                      : ""
+                  }`}
                   key={enquiry.id}
                 >
-
                   <div className="enquiry-admin-top">
                     <div>
                       <span className="enquiry-admin-status">
                         {enquiry.status || "New"}
                       </span>
-                      <h3>{enquiry.name}</h3>
-                      <p>{enquiry.createdAt}</p>
+
+                      <h3>
+                        {enquiry.name}
+                      </h3>
+
+                      <p>
+                        {enquiry.createdAt}
+                      </p>
                     </div>
 
                     <div className="enquiry-admin-actions">
@@ -2094,7 +1873,11 @@ const clearAllEnquiries = async () => {
                         <button
                           type="button"
                           className="enquiry-read-button"
-                          onClick={() => markEnquiryRead(enquiry.id)}
+                          onClick={() =>
+                            markEnquiryRead(
+                              enquiry.id
+                            )
+                          }
                         >
                           Mark Reviewed
                         </button>
@@ -2103,7 +1886,11 @@ const clearAllEnquiries = async () => {
                       <button
                         type="button"
                         className="enquiry-delete-button"
-                        onClick={() => deleteEnquiry(enquiry.id)}
+                        onClick={() =>
+                          deleteEnquiry(
+                            enquiry.id
+                          )
+                        }
                       >
                         Delete
                       </button>
@@ -2112,35 +1899,62 @@ const clearAllEnquiries = async () => {
 
                   <div className="enquiry-admin-grid">
                     <div>
-                      <span>PHONE</span>
-                      <a href={`tel:${enquiry.phone}`}>{enquiry.phone}</a>
+                      <span>
+                        PHONE
+                      </span>
+
+                      <a
+                        href={`tel:${enquiry.phone}`}
+                      >
+                        {enquiry.phone}
+                      </a>
                     </div>
 
                     <div>
-                      <span>EMAIL</span>
-                      <a href={`mailto:${enquiry.email}`}>{enquiry.email}</a>
+                      <span>
+                        EMAIL
+                      </span>
+
+                      <a
+                        href={`mailto:${enquiry.email}`}
+                      >
+                        {enquiry.email}
+                      </a>
                     </div>
 
                     <div>
-                      <span>CITY</span>
-                      <strong>{enquiry.city}</strong>
+                      <span>
+                        CITY
+                      </span>
+
+                      <strong>
+                        {enquiry.city}
+                      </strong>
                     </div>
 
                     <div>
-                      <span>EXPERIENCE</span>
-                      <strong>{enquiry.experience}</strong>
+                      <span>
+                        EXPERIENCE
+                      </span>
+
+                      <strong>
+                        {enquiry.experience}
+                      </strong>
                     </div>
                   </div>
 
                   <div className="enquiry-admin-message">
-                    <span>MESSAGE</span>
-                    <p>{enquiry.message}</p>
-                  </div>
+                    <span>
+                      MESSAGE
+                    </span>
 
+                    <p>
+                      {enquiry.message}
+                    </p>
+                  </div>
                 </article>
               ))}
             </div>
-
           )}
 
           {enquiries.length > 0 && (
@@ -2152,7 +1966,6 @@ const clearAllEnquiries = async () => {
               Clear All Enquiries
             </button>
           )}
-
         </section>
       </>
     );
@@ -2163,12 +1976,9 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderCommunity = () => {
-
     return (
       <>
-
         <div className="admin-header">
-
           <div>
             <p className="admin-small-title">
               ADMIN PANEL
@@ -2185,12 +1995,9 @@ const clearAllEnquiries = async () => {
           >
             View Website →
           </a>
-
         </div>
 
-
         <section className="admin-section community-manager-section">
-
           <div className="admin-section-heading">
             <div>
               <p>
@@ -2203,12 +2010,10 @@ const clearAllEnquiries = async () => {
             </div>
           </div>
 
-
           <form
             className="reel-form community-form"
             onSubmit={handleSaveCommunity}
           >
-
             <div className="admin-field">
               <label>
                 Section Eyebrow
@@ -2217,12 +2022,15 @@ const clearAllEnquiries = async () => {
               <input
                 type="text"
                 name="eyebrow"
-                value={communityForm.eyebrow}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.eyebrow
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 placeholder="JOIN THE COMMUNITY"
               />
             </div>
-
 
             <div className="admin-field">
               <label>
@@ -2232,12 +2040,15 @@ const clearAllEnquiries = async () => {
               <input
                 type="text"
                 name="title"
-                value={communityForm.title}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.title
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 placeholder="Learn. Trade."
               />
             </div>
-
 
             <div className="admin-field">
               <label>
@@ -2247,12 +2058,15 @@ const clearAllEnquiries = async () => {
               <input
                 type="text"
                 name="highlight"
-                value={communityForm.highlight}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.highlight
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 placeholder="Grow Together."
               />
             </div>
-
 
             <div className="admin-field">
               <label>
@@ -2262,12 +2076,15 @@ const clearAllEnquiries = async () => {
               <input
                 type="text"
                 name="buttonText"
-                value={communityForm.buttonText}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.buttonText
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 placeholder="Join Community →"
               />
             </div>
-
 
             <div className="admin-field full-width">
               <label>
@@ -2276,13 +2093,16 @@ const clearAllEnquiries = async () => {
 
               <textarea
                 name="description"
-                value={communityForm.description}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.description
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 rows="5"
                 placeholder="Write your community description..."
               />
             </div>
-
 
             <div className="admin-field full-width">
               <label>
@@ -2292,8 +2112,12 @@ const clearAllEnquiries = async () => {
               <input
                 type="url"
                 name="buttonUrl"
-                value={communityForm.buttonUrl}
-                onChange={handleCommunityChange}
+                value={
+                  communityForm.buttonUrl
+                }
+                onChange={
+                  handleCommunityChange
+                }
                 placeholder="https://t.me/yourcommunity"
               />
 
@@ -2302,19 +2126,15 @@ const clearAllEnquiries = async () => {
               </span>
             </div>
 
-
             <button
               type="submit"
               className="add-reel-button"
             >
               Save Community Section
             </button>
-
           </form>
 
-
           <div className="community-admin-grid community-admin-overview">
-
             <div className="community-admin-card">
               <span>
                 COMMUNITY MEMBERS
@@ -2324,7 +2144,6 @@ const clearAllEnquiries = async () => {
                 {profile.community}
               </strong>
             </div>
-
 
             <div className="community-admin-card">
               <span>
@@ -2336,7 +2155,6 @@ const clearAllEnquiries = async () => {
               </strong>
             </div>
 
-
             <div className="community-admin-card">
               <span>
                 CONTENT
@@ -2346,14 +2164,10 @@ const clearAllEnquiries = async () => {
                 LIVE
               </strong>
             </div>
-
           </div>
-
         </section>
-
       </>
     );
-
   };
 
   // ==================================================
@@ -2361,9 +2175,7 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   const renderContent = () => {
-
     switch (activeTab) {
-
       case "profile":
         return renderProfile();
 
@@ -2381,9 +2193,7 @@ const clearAllEnquiries = async () => {
 
       default:
         return renderDashboard();
-
     }
-
   };
 
   // ==================================================
@@ -2391,32 +2201,26 @@ const clearAllEnquiries = async () => {
   // ==================================================
 
   return (
-
     <div className="admin-page">
-
       {/* SIDEBAR */}
 
       <aside className="admin-sidebar">
-
         <div className="admin-logo">
-
           <span>
             FX
           </span>
 
           {" "}ROYAL TRADER
-
         </div>
 
-
         <div className="admin-menu">
-
           {menuItems.map((item) => (
-
             <button
               key={item.id}
               className={`admin-menu-item ${
-                activeTab === item.id ? "active" : ""
+                activeTab === item.id
+                  ? "active"
+                  : ""
               }`}
               onClick={() =>
                 setActiveTab(item.id)
@@ -2424,11 +2228,8 @@ const clearAllEnquiries = async () => {
             >
               {item.label}
             </button>
-
           ))}
-
         </div>
-
 
         <button
           className="admin-logout"
@@ -2436,22 +2237,16 @@ const clearAllEnquiries = async () => {
         >
           Logout
         </button>
-
       </aside>
-
 
       {/* MAIN */}
 
       <main className="admin-main">
-
         {renderContent()}
-
       </main>
-
     </div>
-
   );
-
 }
 
 export default Admin;
+
