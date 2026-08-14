@@ -1,16 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 
 function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [mode, setMode] = useState("login");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ==================================================
+  // CHECK PASSWORD RECOVERY
+  // ==================================================
+
+  useEffect(() => {
+    const checkRecovery = async () => {
+      const hash = window.location.hash;
+
+      if (
+        hash.includes("type=recovery") ||
+        hash.includes("access_token=")
+      ) {
+        setMode("reset");
+      }
+    };
+
+    checkRecovery();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("reset");
+        setError("");
+        setMessage("");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // ==================================================
+  // NORMAL LOGIN
+  // ==================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
@@ -35,6 +78,112 @@ function AdminLogin({ onLogin }) {
       setLoading(false);
     }
   };
+
+  // ==================================================
+  // SEND PASSWORD RESET EMAIL
+  // ==================================================
+
+  const handleForgotPassword = async () => {
+    setError("");
+    setMessage("");
+
+    if (!email.trim()) {
+      setError("Please enter your admin email first.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const redirectUrl =
+        `${window.location.origin}/admin`;
+
+      const { error: resetError } =
+        await supabase.auth.resetPasswordForEmail(
+          email.trim(),
+          {
+            redirectTo: redirectUrl,
+          }
+        );
+
+      if (resetError) {
+        setError(resetError.message);
+        return;
+      }
+
+      setMessage(
+        "Password reset link has been sent to your email."
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Unable to send password reset email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================================================
+  // UPDATE NEW PASSWORD
+  // ==================================================
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error: updateError } =
+        await supabase.auth.updateUser({
+          password: newPassword,
+        });
+
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
+
+      if (data?.user) {
+        setMessage(
+          "Password updated successfully. You can now login."
+        );
+
+        setNewPassword("");
+        setConfirmPassword("");
+
+        await supabase.auth.signOut();
+
+        window.history.replaceState(
+          {},
+          document.title,
+          "/admin"
+        );
+
+        setMode("login");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Unable to update password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================================================
+  // STYLES
+  // ==================================================
 
   return (
     <>
@@ -160,6 +309,32 @@ function AdminLogin({ onLogin }) {
           box-shadow: none;
         }
 
+        .admin-forgot-button {
+          width: 100%;
+          margin-top: 14px;
+          padding: 11px;
+          border: none;
+          background: transparent;
+          color: #00e889;
+          cursor: pointer;
+          font-size: 13px;
+        }
+
+        .admin-forgot-button:hover {
+          text-decoration: underline;
+        }
+
+        .admin-back-button {
+          width: 100%;
+          margin-top: 12px;
+          padding: 11px;
+          border: 1px solid rgba(255,255,255,.10);
+          border-radius: 10px;
+          background: transparent;
+          color: #aaa;
+          cursor: pointer;
+        }
+
         .admin-login-error {
           margin-top: 14px;
           padding: 11px 12px;
@@ -170,79 +345,218 @@ function AdminLogin({ onLogin }) {
           font-size: 12px;
           text-align: center;
         }
+
+        .admin-login-success {
+          margin-top: 14px;
+          padding: 11px 12px;
+          border-radius: 9px;
+          border: 1px solid rgba(0,232,137,.22);
+          background: rgba(0,232,137,.06);
+          color: #00e889;
+          font-size: 12px;
+          text-align: center;
+        }
       `}</style>
 
       <div className="admin-login-page">
-        <form
-          className="admin-login-card"
-          onSubmit={handleSubmit}
-        >
-          <div className="admin-login-brand">
-            <div className="badge">1K</div>
 
-            <h1>Royal Trader</h1>
+        {/* ==================================================
+            RESET PASSWORD
+        ================================================== */}
 
-            <p>ADMIN LOGIN</p>
-          </div>
+        {mode === "reset" ? (
 
-          {/* EMAIL */}
-
-          <div className="admin-login-field">
-            <label htmlFor="admin-email">
-              Admin Email
-            </label>
-
-            <input
-              id="admin-email"
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError("");
-              }}
-              placeholder="admin@example.com"
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          {/* PASSWORD */}
-
-          <div className="admin-login-field">
-            <label htmlFor="admin-password">
-              Password
-            </label>
-
-            <input
-              id="admin-password"
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
-              placeholder="Enter password"
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          {/* LOGIN */}
-
-          <button
-            type="submit"
-            className="admin-login-button"
-            disabled={loading}
+          <form
+            className="admin-login-card"
+            onSubmit={handlePasswordUpdate}
           >
-            {loading ? "Logging in..." : "Login to Admin"}
-          </button>
 
-          {error && (
-            <div className="admin-login-error">
-              {error}
+            <div className="admin-login-brand">
+
+              <div className="badge">
+                1K
+              </div>
+
+              <h1>
+                Royal Trader
+              </h1>
+
+              <p>
+                SET NEW PASSWORD
+              </p>
+
             </div>
-          )}
-        </form>
+
+            <div className="admin-login-field">
+
+              <label htmlFor="new-password">
+                New Password
+              </label>
+
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Enter new password"
+                autoComplete="new-password"
+                required
+              />
+
+            </div>
+
+            <div className="admin-login-field">
+
+              <label htmlFor="confirm-password">
+                Confirm Password
+              </label>
+
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Confirm new password"
+                autoComplete="new-password"
+                required
+              />
+
+            </div>
+
+            <button
+              type="submit"
+              className="admin-login-button"
+              disabled={loading}
+            >
+              {loading
+                ? "Updating..."
+                : "Update Password"}
+            </button>
+
+            {error && (
+              <div className="admin-login-error">
+                {error}
+              </div>
+            )}
+
+            {message && (
+              <div className="admin-login-success">
+                {message}
+              </div>
+            )}
+
+          </form>
+
+        ) : (
+
+          /* ==================================================
+             LOGIN
+          ================================================== */
+
+          <form
+            className="admin-login-card"
+            onSubmit={handleSubmit}
+          >
+
+            <div className="admin-login-brand">
+
+              <div className="badge">
+                1K
+              </div>
+
+              <h1>
+                Royal Trader
+              </h1>
+
+              <p>
+                ADMIN LOGIN
+              </p>
+
+            </div>
+
+            <div className="admin-login-field">
+
+              <label htmlFor="admin-email">
+                Admin Email
+              </label>
+
+              <input
+                id="admin-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+                placeholder="admin@example.com"
+                autoComplete="email"
+                required
+              />
+
+            </div>
+
+            <div className="admin-login-field">
+
+              <label htmlFor="admin-password">
+                Password
+              </label>
+
+              <input
+                id="admin-password"
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                placeholder="Enter password"
+                autoComplete="current-password"
+                required
+              />
+
+            </div>
+
+            <button
+              type="submit"
+              className="admin-login-button"
+              disabled={loading}
+            >
+              {loading
+                ? "Logging in..."
+                : "Login to Admin"}
+            </button>
+
+            <button
+              type="button"
+              className="admin-forgot-button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+            >
+              Forgot Password?
+            </button>
+
+            {error && (
+              <div className="admin-login-error">
+                {error}
+              </div>
+            )}
+
+            {message && (
+              <div className="admin-login-success">
+                {message}
+              </div>
+            )}
+
+          </form>
+
+        )}
+
       </div>
     </>
   );
