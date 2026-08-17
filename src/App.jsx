@@ -12,7 +12,7 @@ function App() {
   // ==================================================
 
   const defaultProfile = {
-    name: "Royal Trader",
+    name: "Royal Trader Suraj",
     title: "Forex Trader • Educator • IB Partner",
     bio: "I believe Forex trading is not about chasing quick profits. It is about understanding the market, managing risk and developing the right mindset.",
     experience: "4+",
@@ -470,33 +470,27 @@ function App() {
         <a
           className="brand-lockup"
           href="#home"
-          aria-label="Royal Trader home"
+          aria-label="Royal Trader Suraj home"
           onClick={closeMobileMenu}
         >
 
-          <span
-            className="brand-mark"
-            aria-hidden="true"
-          >
-
-            <span className="brand-crown">
-              ♛
-            </span>
-
-            <span className="brand-1k">
-              1K
-            </span>
-
-          </span>
+          <img
+            src="/royal-trader-logo.png"
+            alt="Royal Trader Suraj"
+            className="brand-logo"
+            style={{
+              width: "58px",
+              height: "58px",
+              objectFit: "contain",
+              borderRadius: "50%",
+              flexShrink: 0
+            }}
+          />
 
           <span className="brand-name">
 
             <span className="brand-royal">
-              Royal
-            </span>
-
-            <span className="brand-trader">
-              Trader
+              Royal Trader Suraj
             </span>
 
           </span>
@@ -1166,7 +1160,7 @@ function App() {
 
             <div
               className="about-1k-badge"
-              aria-label="1K Royal Trader"
+              aria-label="Royal Trader Suraj"
             >
               1K
             </div>
@@ -1321,9 +1315,6 @@ function App() {
           </div>
 
 
-          <button className="learn-more-button">
-            Learn More About Me →
-          </button>
 
         </motion.div>
 
@@ -1940,13 +1931,13 @@ function App() {
             <div className="enquiry-modal-brand">
 
               <span className="enquiry-brand-mark">
-                1K
+                RTS
               </span>
 
               <div>
 
                 <span className="enquiry-brand-kicker">
-                  ROYAL
+                  ROYAL TRADER
                 </span>
 
                 <strong>
@@ -1969,7 +1960,7 @@ function App() {
 
 
             <p className="enquiry-modal-subtitle">
-              Fill in your details and the Royal Trader team will review your enquiry.
+              Fill in your details and the Royal Trader Suraj team will review your enquiry.
             </p>
 
 
