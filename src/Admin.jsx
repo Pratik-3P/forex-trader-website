@@ -422,73 +422,139 @@ function Admin() {
   // SAVE PROFILE TO SUPABASE
   // ==================================================
 
-  const handleSaveProfile = async (e) => {
-    e.preventDefault();
+const handleSaveProfile = async (e) => {
+  e.preventDefault();
 
-    if (!profileForm.name.trim()) {
-      alert("Please enter your name.");
-      return;
-    }
+  if (!profileForm.name.trim()) {
+    alert("Please enter your name.");
+    return;
+  }
 
-    if (!profileForm.title.trim()) {
-      alert("Please enter profile title.");
-      return;
-    }
+  if (!profileForm.title.trim()) {
+    alert("Please enter profile title.");
+    return;
+  }
 
-    if (!profileForm.bio.trim()) {
-      alert("Please enter your bio.");
-      return;
-    }
+  if (!profileForm.bio.trim()) {
+    alert("Please enter your bio.");
+    return;
+  }
 
-    const updatedProfile = {
-      ...profileForm
-    };
+  const updatedProfile = {
+    name: profileForm.name.trim(),
+    title: profileForm.title.trim(),
+    bio: profileForm.bio.trim(),
+    experience: profileForm.experience.trim(),
+    community: profileForm.community.trim(),
+    education_posts:
+      profileForm.educationPosts.trim(),
+    profile_image:
+      profileForm.profileImage || "",
+    updated_at: new Date().toISOString()
+  };
 
-    const { error } = await supabase
-      .from("site_profile")
-      .upsert(
-        {
-          id: 1,
-          name: updatedProfile.name,
-          title: updatedProfile.title,
-          bio: updatedProfile.bio,
-          experience: updatedProfile.experience,
-          community: updatedProfile.community,
-          education_posts:
-            updatedProfile.educationPosts,
-          profile_image:
-            updatedProfile.profileImage,
-          updated_at:
-            new Date().toISOString()
-        },
-        {
-          onConflict: "id"
-        }
-      );
+  console.log("Saving profile:", updatedProfile);
 
-    if (error) {
+  try {
+    // First try UPDATE
+    const { data: updateData, error: updateError } =
+      await supabase
+        .from("site_profile")
+        .update(updatedProfile)
+        .eq("id", 1)
+        .select();
+
+    console.log("Profile update response:", {
+      updateData,
+      updateError
+    });
+
+    if (updateError) {
       console.error(
-        "Supabase profile save error:",
-        error
+        "Supabase UPDATE error:",
+        updateError
       );
 
       alert(
-        "Could not save profile. Please check Supabase."
+        `Profile save failed.\n\n` +
+        `Code: ${updateError.code || "N/A"}\n` +
+        `Message: ${updateError.message || "Unknown error"}\n\n` +
+        `Check Supabase RLS policies.`
       );
 
       return;
     }
 
-    setProfile(updatedProfile);
+    // If row with id=1 exists, UPDATE succeeds
+    if (updateData && updateData.length > 0) {
+      setProfile({
+        ...profileForm
+      });
 
-    // Keep local copy too
+      localStorage.setItem(
+        "fxProfile",
+        JSON.stringify(profileForm)
+      );
+
+      alert("Profile updated successfully!");
+      return;
+    }
+
+    // If id=1 does not exist, INSERT it
+    const { data: insertData, error: insertError } =
+      await supabase
+        .from("site_profile")
+        .insert({
+          id: 1,
+          ...updatedProfile
+        })
+        .select();
+
+    console.log("Profile insert response:", {
+      insertData,
+      insertError
+    });
+
+    if (insertError) {
+      console.error(
+        "Supabase INSERT error:",
+        insertError
+      );
+
+      alert(
+        `Profile creation failed.\n\n` +
+        `Code: ${insertError.code || "N/A"}\n` +
+        `Message: ${insertError.message || "Unknown error"}\n\n` +
+        `Check Supabase INSERT policy.`
+      );
+
+      return;
+    }
+
+    setProfile({
+      ...profileForm
+    });
+
     localStorage.setItem(
       "fxProfile",
-      JSON.stringify(updatedProfile)
+      JSON.stringify(profileForm)
     );
 
-    alert("Profile updated successfully!");
-  };
+    alert("Profile saved successfully!");
+  } catch (error) {
+    console.error(
+      "Unexpected profile save error:",
+      error
+    );
+
+    alert(
+      `Unexpected error:\n\n${
+        error?.message || error
+      }`
+    );
+  }
+};
+
 
   // ==================================================
   // SAVE TRADING RESULTS

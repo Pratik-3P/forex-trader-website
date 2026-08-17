@@ -48,6 +48,12 @@ function App() {
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
 
   // ==================================================
+  // MOBILE MENU
+  // ==================================================
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // ==================================================
   // TRADING RESULTS
   // ==================================================
 
@@ -72,7 +78,6 @@ function App() {
   const [tradingResults, setTradingResults] = useState(
     defaultTradingResults
   );
-
 
   // ==================================================
   // COMMUNITY
@@ -120,7 +125,6 @@ function App() {
 
     };
 
-
     // Load community
     const loadCommunity = () => {
 
@@ -145,6 +149,7 @@ function App() {
         JSON.parse(localStorage.getItem("fxTradingResults"));
 
       if (savedResults) {
+
         // Current format used by Admin.jsx
         if (
           savedResults.weekly &&
@@ -155,18 +160,20 @@ function App() {
           return;
         }
 
-        // Backward compatibility for the old website format
+        // Backward compatibility
         setTradingResults({
           weekly: {
             result: savedResults.weeklyResult || "+3.8%",
             winRate: savedResults.winRate || "76%",
             totalTrades: savedResults.totalTrades || "18"
           },
+
           monthly: {
             result: savedResults.monthlyResult || "+12.4%",
             winRate: savedResults.winRate || "78%",
             totalTrades: savedResults.totalTrades || "124"
           },
+
           yearly: {
             result: savedResults.yearlyResult || "+48.6%",
             winRate: savedResults.winRate || "81%",
@@ -186,8 +193,16 @@ function App() {
     window.addEventListener("storage", loadProfile);
     window.addEventListener("storage", loadCommunity);
     window.addEventListener("storage", loadTradingResults);
-    window.addEventListener("fxCommunityUpdated", loadCommunity);
-    window.addEventListener("fxTradingResultsUpdated", loadTradingResults);
+
+    window.addEventListener(
+      "fxCommunityUpdated",
+      loadCommunity
+    );
+
+    window.addEventListener(
+      "fxTradingResultsUpdated",
+      loadTradingResults
+    );
 
     return () => {
 
@@ -195,8 +210,16 @@ function App() {
       window.removeEventListener("storage", loadProfile);
       window.removeEventListener("storage", loadCommunity);
       window.removeEventListener("storage", loadTradingResults);
-      window.removeEventListener("fxCommunityUpdated", loadCommunity);
-      window.removeEventListener("fxTradingResultsUpdated", loadTradingResults);
+
+      window.removeEventListener(
+        "fxCommunityUpdated",
+        loadCommunity
+      );
+
+      window.removeEventListener(
+        "fxTradingResultsUpdated",
+        loadTradingResults
+      );
 
     };
 
@@ -212,9 +235,14 @@ function App() {
       event.preventDefault();
     }
 
+    // Close mobile menu
+    setMobileMenuOpen(false);
+
     setShowEnquiryForm(true);
 
-    document.body.classList.add("enquiry-modal-open");
+    document.body.classList.add(
+      "enquiry-modal-open"
+    );
 
   };
 
@@ -222,7 +250,9 @@ function App() {
 
     setShowEnquiryForm(false);
 
-    document.body.classList.remove("enquiry-modal-open");
+    document.body.classList.remove(
+      "enquiry-modal-open"
+    );
 
   };
 
@@ -237,56 +267,78 @@ function App() {
 
   };
 
+  // ==================================================
+  // SUBMIT ENQUIRY TO SUPABASE
+  // ==================================================
+
   const handleEnquirySubmit = async (event) => {
-  event.preventDefault();
 
-  setEnquirySubmitting(true);
+    event.preventDefault();
 
-  try {
-    const { error } = await supabase
-      .from("enquiries")
-      .insert([
-        {
-          name: enquiryForm.name.trim(),
-          phone: enquiryForm.phone.trim(),
-          email: enquiryForm.email.trim(),
-          city: enquiryForm.city.trim(),
-          experience: enquiryForm.experience,
-          message: enquiryForm.message.trim(),
-          status: "New"
-        }
-      ]);
+    setEnquirySubmitting(true);
 
-    if (error) {
-      console.error("Supabase enquiry error:", error);
+    try {
 
-      window.alert(
-        "Sorry, your enquiry could not be submitted. Please try again."
+      const { error } = await supabase
+        .from("enquiries")
+        .insert([
+          {
+            name: enquiryForm.name.trim(),
+            phone: enquiryForm.phone.trim(),
+            email: enquiryForm.email.trim(),
+            city: enquiryForm.city.trim(),
+            experience: enquiryForm.experience,
+            message: enquiryForm.message.trim(),
+            status: "New"
+          }
+        ]);
+
+      if (error) {
+
+        console.error(
+          "Supabase enquiry error:",
+          error
+        );
+
+        window.alert(
+          "Sorry, your enquiry could not be submitted. Please try again."
+        );
+
+        return;
+      }
+
+      setEnquiryForm(
+        defaultEnquiryForm
       );
 
-      return;
+      closeEnquiryForm();
+
+      window.setTimeout(() => {
+
+        window.alert(
+          "Thank you! Your enquiry has been submitted successfully."
+        );
+
+      }, 0);
+
+    } catch (error) {
+
+      console.error(
+        "Unexpected enquiry error:",
+        error
+      );
+
+      window.alert(
+        "Something went wrong. Please try again."
+      );
+
+    } finally {
+
+      setEnquirySubmitting(false);
+
     }
 
-    setEnquiryForm(defaultEnquiryForm);
-    closeEnquiryForm();
-
-    window.setTimeout(() => {
-      window.alert(
-        "Thank you! Your enquiry has been submitted successfully."
-      );
-    }, 0);
-
-  } catch (error) {
-    console.error("Unexpected enquiry error:", error);
-
-    window.alert(
-      "Something went wrong. Please try again."
-    );
-
-  } finally {
-    setEnquirySubmitting(false);
-  }
-};
+  };
 
   // ==================================================
   // ADMIN LOGIN
@@ -297,7 +349,8 @@ function App() {
     return (
       <AdminLogin
         onLogin={() => {
-          window.location.href = "/admin/dashboard";
+          window.location.href =
+            "/admin/dashboard";
         }}
       />
     );
@@ -308,7 +361,10 @@ function App() {
   // ADMIN DASHBOARD
   // ==================================================
 
-  if (window.location.pathname === "/admin/dashboard") {
+  if (
+    window.location.pathname ===
+    "/admin/dashboard"
+  ) {
 
     return <Admin />;
 
@@ -346,15 +402,24 @@ function App() {
 
   };
 
+  // ==================================================
+  // OPEN COMMUNITY
+  // ==================================================
+
   const openCommunity = () => {
 
-    const url = (community.buttonUrl || "").trim();
+    const url =
+      (community.buttonUrl || "").trim();
 
     if (!url) {
-      document.getElementById("community")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+
+      document
+        .getElementById("community")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
       return;
     }
 
@@ -381,6 +446,14 @@ function App() {
   };
 
   // ==================================================
+  // CLOSE MOBILE MENU
+  // ==================================================
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  // ==================================================
   // RETURN WEBSITE
   // ==================================================
 
@@ -394,16 +467,44 @@ function App() {
 
       <nav className="navbar">
 
-        <a className="brand-lockup" href="#home" aria-label="Royal Trader home">
-          <span className="brand-mark" aria-hidden="true">
-            <span className="brand-crown">♛</span>
-            <span className="brand-1k">1K</span>
+        <a
+          className="brand-lockup"
+          href="#home"
+          aria-label="Royal Trader home"
+          onClick={closeMobileMenu}
+        >
+
+          <span
+            className="brand-mark"
+            aria-hidden="true"
+          >
+
+            <span className="brand-crown">
+              ♛
+            </span>
+
+            <span className="brand-1k">
+              1K
+            </span>
+
           </span>
+
           <span className="brand-name">
-            <span className="brand-royal">Royal</span>
-            <span className="brand-trader">Trader</span>
+
+            <span className="brand-royal">
+              Royal
+            </span>
+
+            <span className="brand-trader">
+              Trader
+            </span>
+
           </span>
+
         </a>
+
+
+        {/* DESKTOP NAVIGATION */}
 
         <div className="nav-links">
 
@@ -427,9 +528,37 @@ function App() {
             Community
           </a>
 
-          <button type="button" className="nav-contact-button" onClick={openEnquiryForm}>Contact</button>
+          <button
+            type="button"
+            className="nav-contact-button"
+            onClick={openEnquiryForm}
+          >
+            Contact
+          </button>
 
         </div>
+
+
+        {/* MOBILE MENU BUTTON */}
+
+        <button
+          type="button"
+          className="mobile-menu-button"
+          onClick={() =>
+            setMobileMenuOpen(
+              (previous) => !previous
+            )
+          }
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+        >
+
+          {mobileMenuOpen ? "×" : "☰"}
+
+        </button>
+
+
+        {/* DESKTOP START LEARNING */}
 
         <button
           type="button"
@@ -440,6 +569,76 @@ function App() {
         </button>
 
       </nav>
+
+
+      {/* ==================================================
+          MOBILE NAVIGATION MENU
+      ================================================== */}
+
+      {mobileMenuOpen && (
+
+        <div className="mobile-nav-menu">
+
+          <a
+            href="#home"
+            onClick={closeMobileMenu}
+          >
+            Home
+          </a>
+
+          <a
+            href="#about"
+            onClick={closeMobileMenu}
+          >
+            About
+          </a>
+
+          <a
+            href="#learn"
+            onClick={closeMobileMenu}
+          >
+            Learn Forex
+          </a>
+
+          <a
+            href="#results"
+            onClick={closeMobileMenu}
+          >
+            Results
+          </a>
+
+          <a
+            href="#community"
+            onClick={closeMobileMenu}
+          >
+            Community
+          </a>
+
+          <button
+            type="button"
+            className="mobile-contact-button"
+            onClick={openEnquiryForm}
+          >
+            Contact
+          </button>
+
+          <button
+            type="button"
+            className="mobile-learning-button"
+            onClick={() => {
+
+              closeMobileMenu();
+
+              openYouTube();
+
+            }}
+          >
+            Start Learning →
+          </button>
+
+        </div>
+
+      )}
 
 
       {/* ==================================================
@@ -629,7 +828,6 @@ function App() {
 
 
           <div className="trader-card">
-
 
             <div className="chart-header">
 
@@ -966,7 +1164,10 @@ function App() {
 
           <div className="about-photo">
 
-            <div className="about-1k-badge" aria-label="1K Royal Trader">
+            <div
+              className="about-1k-badge"
+              aria-label="1K Royal Trader"
+            >
               1K
             </div>
 
@@ -1056,27 +1257,65 @@ function App() {
           <div className="about-points">
 
             <article className="about-point-card">
-              <div className="about-point-number">01</div>
-              <div className="about-point-content">
-                <h3>Market Education</h3>
-                <p>Learn the fundamentals and understand how the Forex market works.</p>
+
+              <div className="about-point-number">
+                01
               </div>
+
+              <div className="about-point-content">
+
+                <h3>
+                  Market Education
+                </h3>
+
+                <p>
+                  Learn the fundamentals and understand how the Forex market works.
+                </p>
+
+              </div>
+
             </article>
 
-            <article className="about-point-card">
-              <div className="about-point-number">02</div>
-              <div className="about-point-content">
-                <h3>Risk Management</h3>
-                <p>Build a disciplined approach to managing trading risk.</p>
-              </div>
-            </article>
 
             <article className="about-point-card">
-              <div className="about-point-number">03</div>
-              <div className="about-point-content">
-                <h3>Trading Mindset</h3>
-                <p>Develop patience, consistency and better decision making.</p>
+
+              <div className="about-point-number">
+                02
               </div>
+
+              <div className="about-point-content">
+
+                <h3>
+                  Risk Management
+                </h3>
+
+                <p>
+                  Build a disciplined approach to managing trading risk.
+                </p>
+
+              </div>
+
+            </article>
+
+
+            <article className="about-point-card">
+
+              <div className="about-point-number">
+                03
+              </div>
+
+              <div className="about-point-content">
+
+                <h3>
+                  Trading Mindset
+                </h3>
+
+                <p>
+                  Develop patience, consistency and better decision making.
+                </p>
+
+              </div>
+
             </article>
 
           </div>
@@ -1146,12 +1385,7 @@ function App() {
         </motion.div>
 
 
-        {/* ==================================================
-            REELS GRID
-        ================================================== */}
-
         <div className="reels-grid">
-
 
           {reels.length === 0 ? (
 
@@ -1199,9 +1433,6 @@ function App() {
                 }}
               >
 
-
-                {/* REEL IMAGE */}
-
                 <div
                   className="reel-preview real-reel-preview"
 
@@ -1221,7 +1452,6 @@ function App() {
 
                   }}
                 >
-
 
                   {reel.coverImage ? (
 
@@ -1246,17 +1476,14 @@ function App() {
                   <div className="instagram-icon">
                     ◎
                   </div>
-<span className="reel-label">
 
+
+                  <span className="reel-label">
                     {reel.category}
-
                   </span>
-
 
                 </div>
 
-
-                {/* REEL INFO */}
 
                 <div className="reel-info">
 
@@ -1281,7 +1508,6 @@ function App() {
 
                 </div>
 
-
               </motion.article>
 
             ))
@@ -1290,8 +1516,6 @@ function App() {
 
         </div>
 
-
-        {/* INSTAGRAM PROFILE BUTTON */}
 
         <div className="instagram-button-wrapper">
 
@@ -1310,53 +1534,305 @@ function App() {
       {/* ==================================================
           TRADING RESULTS
       ================================================== */}
-      <section className="results-new-section" id="results">
-        <motion.div className="results-new-heading" initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.2}} transition={{duration:0.7}}>
-          <p className="results-new-tag">TRADING PERFORMANCE</p>
-          <h2>Real Trading <span>Results.</span></h2>
-          <p>Transparent performance tracking across weekly, monthly and yearly trading results.</p>
+
+      <section
+        className="results-new-section"
+        id="results"
+      >
+
+        <motion.div
+          className="results-new-heading"
+
+          initial={{
+            opacity: 0,
+            y: 30
+          }}
+
+          whileInView={{
+            opacity: 1,
+            y: 0
+          }}
+
+          viewport={{
+            once: true,
+            amount: 0.2
+          }}
+
+          transition={{
+            duration: 0.7
+          }}
+        >
+
+          <p className="results-new-tag">
+            TRADING PERFORMANCE
+          </p>
+
+          <h2>
+            Real Trading <span>Results.</span>
+          </h2>
+
+          <p>
+            Transparent performance tracking across weekly, monthly and yearly trading results.
+          </p>
+
         </motion.div>
+
 
         <div className="results-new-grid">
+
           {[
-            {key:"weekly",label:"WEEKLY RESULT",period:"THIS WEEK",description:"Current weekly trading performance"},
-            {key:"monthly",label:"MONTHLY RESULT",period:"THIS MONTH",description:"Current monthly trading performance"},
-            {key:"yearly",label:"YEARLY RESULT",period:"THIS YEAR",description:"Current yearly trading performance"}
-          ].map((item,index)=>(
-            <motion.article className="results-new-card" key={item.key} initial={{opacity:0,y:40}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.2}} transition={{delay:index*0.1,duration:0.6}}>
+            {
+              key: "weekly",
+              label: "WEEKLY RESULT",
+              period: "THIS WEEK",
+              description: "Current weekly trading performance"
+            },
+
+            {
+              key: "monthly",
+              label: "MONTHLY RESULT",
+              period: "THIS MONTH",
+              description: "Current monthly trading performance"
+            },
+
+            {
+              key: "yearly",
+              label: "YEARLY RESULT",
+              period: "THIS YEAR",
+              description: "Current yearly trading performance"
+            }
+
+          ].map((item, index) => (
+
+            <motion.article
+              className="results-new-card"
+              key={item.key}
+
+              initial={{
+                opacity: 0,
+                y: 40
+              }}
+
+              whileInView={{
+                opacity: 1,
+                y: 0
+              }}
+
+              viewport={{
+                once: true,
+                amount: 0.2
+              }}
+
+              transition={{
+                delay: index * 0.1,
+                duration: 0.6
+              }}
+            >
+
               <div className="results-new-card-header">
-                <div><span>{item.label}</span><small>{item.period}</small></div>
-                <div className="results-new-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M4 16l5-5 4 3 7-8"/><path d="M15 6h5v5"/></svg>
+
+                <div>
+
+                  <span>
+                    {item.label}
+                  </span>
+
+                  <small>
+                    {item.period}
+                  </small>
+
                 </div>
+
+
+                <div
+                  className="results-new-icon"
+                  aria-hidden="true"
+                >
+
+                  <svg viewBox="0 0 24 24">
+
+                    <path d="M4 16l5-5 4 3 7-8" />
+
+                    <path d="M15 6h5v5" />
+
+                  </svg>
+
+                </div>
+
               </div>
-              <strong className="results-new-number">{tradingResults[item.key].result}</strong>
-              <p>{item.description}</p>
-              <div className="results-new-line"/>
+
+
+              <strong className="results-new-number">
+
+                {tradingResults[item.key].result}
+
+              </strong>
+
+
+              <p>
+                {item.description}
+              </p>
+
+
+              <div className="results-new-line" />
+
             </motion.article>
+
           ))}
+
         </div>
 
-        <motion.div className="results-new-stats" initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.2}} transition={{delay:0.25,duration:0.6}}>
+
+        <motion.div
+          className="results-new-stats"
+
+          initial={{
+            opacity: 0,
+            y: 30
+          }}
+
+          whileInView={{
+            opacity: 1,
+            y: 0
+          }}
+
+          viewport={{
+            once: true,
+            amount: 0.2
+          }}
+
+          transition={{
+            delay: 0.25,
+            duration: 0.6
+          }}
+        >
+
           <div className="results-new-stat">
-            <div className="results-new-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M16 7.5c0-1.7-1.7-3-4-3s-4 1.3-4 3 1.7 3 4 3 4 1.3 4 3-1.7 3-4 3-4-1.3-4-3"/></svg></div>
-            <div><span>WIN RATE</span><strong>{tradingResults.monthly.winRate}</strong></div>
+
+            <div
+              className="results-new-stat-icon"
+              aria-hidden="true"
+            >
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="M12 3v18" />
+
+                <path d="M16 7.5c0-1.7-1.7-3-4-3s-4 1.3-4 3 1.7 3 4 3 4 1.3 4 3-1.7 3-4 3-4-1.3-4-3" />
+
+              </svg>
+
+            </div>
+
+            <div>
+
+              <span>
+                WIN RATE
+              </span>
+
+              <strong>
+                {tradingResults.monthly.winRate}
+              </strong>
+
+            </div>
+
           </div>
+
+
           <div className="results-new-stat">
-            <div className="results-new-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg></div>
-            <div><span>TOTAL TRADES</span><strong>{tradingResults.monthly.totalTrades}</strong></div>
+
+            <div
+              className="results-new-stat-icon"
+              aria-hidden="true"
+            >
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="M7 7h10" />
+
+                <path d="M7 12h10" />
+
+                <path d="M7 17h10" />
+
+              </svg>
+
+            </div>
+
+            <div>
+
+              <span>
+                TOTAL TRADES
+              </span>
+
+              <strong>
+                {tradingResults.monthly.totalTrades}
+              </strong>
+
+            </div>
+
           </div>
+
+
           <div className="results-new-stat">
-            <div className="results-new-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 16l5-5 3 3 6-7"/><path d="M14 7h5v5"/></svg></div>
-            <div><span>PERFORMANCE</span><strong>TRACKED</strong></div>
+
+            <div
+              className="results-new-stat-icon"
+              aria-hidden="true"
+            >
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="M5 16l5-5 3 3 6-7" />
+
+                <path d="M14 7h5v5" />
+
+              </svg>
+
+            </div>
+
+            <div>
+
+              <span>
+                PERFORMANCE
+              </span>
+
+              <strong>
+                TRACKED
+              </strong>
+
+            </div>
+
           </div>
+
         </motion.div>
 
+
         <div className="results-new-disclaimer">
-          <div className="results-new-warning" aria-hidden="true">!</div>
-          <div><strong>Trading Risk Disclosure</strong><p>Past trading results do not guarantee future performance. Trading involves risk. Always manage your risk responsibly.</p></div>
+
+          <div
+            className="results-new-warning"
+            aria-hidden="true"
+          >
+            !
+          </div>
+
+          <div>
+
+            <strong>
+              Trading Risk Disclosure
+            </strong>
+
+            <p>
+              Past trading results do not guarantee future performance.
+              Trading involves risk. Always manage your risk responsibly.
+            </p>
+
+          </div>
+
         </div>
+
       </section>
+
 
       {/* ==================================================
           COMMUNITY
@@ -1427,17 +1903,28 @@ function App() {
       ================================================== */}
 
       {showEnquiryForm && (
+
         <div
           className="enquiry-modal-backdrop"
+
           role="dialog"
+
           aria-modal="true"
+
           aria-labelledby="enquiry-modal-title"
+
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
               closeEnquiryForm();
             }
+
           }}
         >
+
           <div className="enquiry-modal-card">
 
             <button
@@ -1449,28 +1936,54 @@ function App() {
               ×
             </button>
 
+
             <div className="enquiry-modal-brand">
-              <span className="enquiry-brand-mark">1K</span>
+
+              <span className="enquiry-brand-mark">
+                1K
+              </span>
+
               <div>
-                <span className="enquiry-brand-kicker">ROYAL</span>
-                <strong>Trader Enquiry</strong>
+
+                <span className="enquiry-brand-kicker">
+                  ROYAL
+                </span>
+
+                <strong>
+                  Trader Enquiry
+                </strong>
+
               </div>
+
             </div>
 
-            <p className="enquiry-modal-tag">1K CONTACT FORM</p>
 
-            <h2 id="enquiry-modal-title">Let&apos;s Connect.</h2>
+            <p className="enquiry-modal-tag">
+              1K CONTACT FORM
+            </p>
+
+
+            <h2 id="enquiry-modal-title">
+              Let&apos;s Connect.
+            </h2>
+
 
             <p className="enquiry-modal-subtitle">
               Fill in your details and the Royal Trader team will review your enquiry.
             </p>
 
-            <form className="enquiry-form" onSubmit={handleEnquirySubmit}>
+
+            <form
+              className="enquiry-form"
+              onSubmit={handleEnquirySubmit}
+            >
 
               <div className="enquiry-form-grid">
 
                 <label>
+
                   Full Name
+
                   <input
                     type="text"
                     name="name"
@@ -1479,10 +1992,14 @@ function App() {
                     placeholder="Your full name"
                     required
                   />
+
                 </label>
 
+
                 <label>
+
                   WhatsApp / Mobile
+
                   <input
                     type="tel"
                     name="phone"
@@ -1491,10 +2008,14 @@ function App() {
                     placeholder="+91 98765 43210"
                     required
                   />
+
                 </label>
 
+
                 <label>
+
                   Email Address
+
                   <input
                     type="email"
                     name="email"
@@ -1503,10 +2024,14 @@ function App() {
                     placeholder="you@example.com"
                     required
                   />
+
                 </label>
 
+
                 <label>
+
                   City
+
                   <input
                     type="text"
                     name="city"
@@ -1515,26 +2040,50 @@ function App() {
                     placeholder="Mumbai"
                     required
                   />
+
                 </label>
 
+
                 <label className="enquiry-field-full">
+
                   Trading Experience
+
                   <select
                     name="experience"
                     value={enquiryForm.experience}
                     onChange={handleEnquiryChange}
                     required
                   >
-                    <option value="">Select experience</option>
-                    <option value="Beginner">Beginner</option>
-                    <option value="0-1 year">0–1 year</option>
-                    <option value="1-3 years">1–3 years</option>
-                    <option value="3+ years">3+ years</option>
+
+                    <option value="">
+                      Select experience
+                    </option>
+
+                    <option value="Beginner">
+                      Beginner
+                    </option>
+
+                    <option value="0-1 year">
+                      0–1 year
+                    </option>
+
+                    <option value="1-3 years">
+                      1–3 years
+                    </option>
+
+                    <option value="3+ years">
+                      3+ years
+                    </option>
+
                   </select>
+
                 </label>
 
+
                 <label className="enquiry-field-full">
+
                   Message
+
                   <textarea
                     name="message"
                     value={enquiryForm.message}
@@ -1543,25 +2092,37 @@ function App() {
                     placeholder="Tell us what you would like to learn or discuss..."
                     required
                   />
+
                 </label>
 
               </div>
+
 
               <button
                 className="enquiry-submit-button"
                 type="submit"
                 disabled={enquirySubmitting}
               >
-                {enquirySubmitting ? "Submitting..." : "Submit Enquiry →"}
+
+                {enquirySubmitting
+                  ? "Submitting..."
+                  : "Submit Enquiry →"}
+
               </button>
 
+
               <p className="enquiry-form-note">
+
                 Your details are saved securely in this website&apos;s admin enquiry panel.
+
               </p>
 
             </form>
+
           </div>
+
         </div>
+
       )}
 
 
@@ -1570,7 +2131,6 @@ function App() {
       ================================================== */}
 
       <footer id="contact">
-
 
         <div className="footer-logo">
 
@@ -1610,7 +2170,6 @@ function App() {
           © 2026 {profile.name}. All rights reserved.
 
         </div>
-
 
       </footer>
 
