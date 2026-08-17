@@ -90,7 +90,7 @@ function App() {
     description:
       "Follow the journey, learn from market insights and connect with a community focused on improving their trading knowledge.",
     buttonText: "Join Community →",
-    buttonUrl: "https://t.me/"
+    buttonUrl: "https://t.me/royaltradersurajofficiall"
   };
 
   const [community, setCommunity] = useState(
