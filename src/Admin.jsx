@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import "./Admin.css";
@@ -99,140 +98,146 @@ function Admin() {
   // ==================================================
 
   useEffect(() => {
-    // ==================================================
-    // LOAD REELS
-    // ==================================================
+    const loadAllData = async () => {
+      try {
+        const [reelsResponse, profileResponse, resultsResponse, communityResponse, enquiriesResponse] =
+          await Promise.all([
+            supabase
+              .from("reels")
+              .select("*")
+              .order("created_at", { ascending: false }),
 
-    const savedReels =
-      JSON.parse(localStorage.getItem("fxReels")) || [];
+            supabase
+              .from("site_profile")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle(),
 
-    setReels(savedReels);
+            supabase
+              .from("trading_results")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle(),
 
-    // ==================================================
-    // LOAD PROFILE FROM SUPABASE
-    // ==================================================
+            supabase
+              .from("community")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle(),
 
-    const loadProfile = async () => {
-      const { data, error } = await supabase
-        .from("site_profile")
-        .select("*")
-        .eq("id", 1)
-        .single();
+            supabase
+              .from("enquiries")
+              .select("*")
+              .order("created_at", { ascending: false })
+          ]);
 
-      if (error) {
-        console.error("Supabase profile load error:", error);
-        return;
-      }
+        if (reelsResponse.error) {
+          console.error("Supabase reels load error:", reelsResponse.error);
+        } else {
+          setReels(
+            (reelsResponse.data || []).map((reel) => ({
+              id: reel.id,
+              title: reel.title || "",
+              category: reel.category || "Daily Market",
+              url: reel.url || "",
+              coverImage: reel.cover_image || "",
+              createdAt: reel.created_at
+                ? new Date(reel.created_at).toLocaleDateString()
+                : ""
+            }))
+          );
+        }
 
-      if (data) {
-        const loadedProfile = {
-          name: data.name || defaultProfile.name,
-          title: data.title || defaultProfile.title,
-          bio: data.bio || defaultProfile.bio,
-          experience:
-            data.experience || defaultProfile.experience,
-          community:
-            data.community || defaultProfile.community,
-          educationPosts:
-            data.education_posts ||
-            defaultProfile.educationPosts,
-          profileImage:
-            data.profile_image || ""
-        };
+        if (profileResponse.error) {
+          console.error("Supabase profile load error:", profileResponse.error);
+        } else if (profileResponse.data) {
+          const data = profileResponse.data;
+          const loadedProfile = {
+            name: data.name || defaultProfile.name,
+            title: data.title || defaultProfile.title,
+            bio: data.bio || defaultProfile.bio,
+            experience: data.experience || defaultProfile.experience,
+            community: data.community || defaultProfile.community,
+            educationPosts:
+              data.education_posts || defaultProfile.educationPosts,
+            profileImage: data.profile_image || ""
+          };
 
-        setProfile(loadedProfile);
-        setProfileForm(loadedProfile);
+          setProfile(loadedProfile);
+          setProfileForm(loadedProfile);
+        }
+
+        if (resultsResponse.error) {
+          console.error(
+            "Supabase trading results load error:",
+            resultsResponse.error
+          );
+        } else if (resultsResponse.data) {
+          const data = resultsResponse.data;
+          setTradingResults({
+            weekly: {
+              result: data.weekly_result || defaultTradingResults.weekly.result,
+              winRate:
+                data.weekly_win_rate || defaultTradingResults.weekly.winRate,
+              totalTrades:
+                data.weekly_total_trades ||
+                defaultTradingResults.weekly.totalTrades
+            },
+            monthly: {
+              result:
+                data.monthly_result || defaultTradingResults.monthly.result,
+              winRate:
+                data.monthly_win_rate || defaultTradingResults.monthly.winRate,
+              totalTrades:
+                data.monthly_total_trades ||
+                defaultTradingResults.monthly.totalTrades
+            },
+            yearly: {
+              result: data.yearly_result || defaultTradingResults.yearly.result,
+              winRate:
+                data.yearly_win_rate || defaultTradingResults.yearly.winRate,
+              totalTrades:
+                data.yearly_total_trades ||
+                defaultTradingResults.yearly.totalTrades
+            }
+          });
+        }
+
+        if (communityResponse.error) {
+          console.error(
+            "Supabase community load error:",
+            communityResponse.error
+          );
+        } else if (communityResponse.data) {
+          const data = communityResponse.data;
+          const loadedCommunity = {
+            eyebrow: data.eyebrow || defaultCommunity.eyebrow,
+            title: data.title || defaultCommunity.title,
+            highlight: data.highlight || defaultCommunity.highlight,
+            description:
+              data.description || defaultCommunity.description,
+            buttonText: data.button_text || defaultCommunity.buttonText,
+            buttonUrl: data.button_url || defaultCommunity.buttonUrl
+          };
+
+          setCommunity(loadedCommunity);
+          setCommunityForm(loadedCommunity);
+        }
+
+        if (enquiriesResponse.error) {
+          console.error(
+            "Supabase enquiries load error:",
+            enquiriesResponse.error
+          );
+        } else {
+          setEnquiries(enquiriesResponse.data || []);
+        }
+      } catch (error) {
+        console.error("Supabase data loading error:", error);
       }
     };
 
-    loadProfile();
-
-    // ==================================================
-    // LOAD COMMUNITY
-    // ==================================================
-
-    const savedCommunity =
-      JSON.parse(localStorage.getItem("fxCommunity"));
-
-    if (savedCommunity) {
-      const mergedCommunity = {
-        ...defaultCommunity,
-        ...savedCommunity
-      };
-
-      setCommunity(mergedCommunity);
-      setCommunityForm(mergedCommunity);
-    }
-
-    // ==================================================
-    // LOAD ENQUIRIES
-    // ==================================================
-
-    const loadEnquiries = async () => {
-      const { data, error } = await supabase
-        .from("enquiries")
-        .select("*")
-        .order("created_at", {
-          ascending: false
-        });
-
-      if (error) {
-        console.error(
-          "Supabase enquiries error:",
-          error
-        );
-        return;
-      }
-
-      setEnquiries(data || []);
-    };
-
-    loadEnquiries();
-
-    // ==================================================
-    // LOAD TRADING RESULTS
-    // ==================================================
-
-    const savedResults =
-      JSON.parse(
-        localStorage.getItem("fxTradingResults")
-      );
-
-    if (savedResults) {
-      if (
-        savedResults.weekly &&
-        savedResults.monthly &&
-        savedResults.yearly
-      ) {
-        setTradingResults(savedResults);
-      } else {
-        setTradingResults({
-          weekly: {
-            result: "+3.8%",
-            winRate: "76%",
-            totalTrades: "18"
-          },
-
-          monthly: {
-            result:
-              savedResults.monthlyResult ||
-              "+12.4%",
-            winRate:
-              savedResults.winRate ||
-              "78%",
-            totalTrades:
-              savedResults.totalTrades ||
-              "124"
-          },
-
-          yearly: {
-            result: "+48.6%",
-            winRate: "81%",
-            totalTrades: "520"
-          }
-        });
-      }
-    }
+    loadAllData();
   }, []);
 
   // ==================================================
@@ -285,7 +290,7 @@ function Admin() {
   // ADD REEL
   // ==================================================
 
-  const handleAddReel = (e) => {
+  const handleAddReel = async (e) => {
     e.preventDefault();
 
     if (!form.title.trim()) {
@@ -308,26 +313,37 @@ function Admin() {
       return;
     }
 
+    const { data, error } = await supabase
+      .from("reels")
+      .insert({
+        title: form.title.trim(),
+        category: form.category,
+        url: form.url.trim(),
+        cover_image: form.coverImage
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase reel insert error:", error);
+      alert(
+        `Reel could not be added.\n\n${error.message || "Unknown Supabase error"}`
+      );
+      return;
+    }
+
     const newReel = {
-      id: Date.now(),
-      title: form.title,
-      category: form.category,
-      url: form.url,
-      coverImage: form.coverImage,
-      createdAt: new Date().toLocaleDateString()
+      id: data.id,
+      title: data.title,
+      category: data.category,
+      url: data.url,
+      coverImage: data.cover_image || "",
+      createdAt: data.created_at
+        ? new Date(data.created_at).toLocaleDateString()
+        : new Date().toLocaleDateString()
     };
 
-    const updatedReels = [
-      newReel,
-      ...reels
-    ];
-
-    setReels(updatedReels);
-
-    localStorage.setItem(
-      "fxReels",
-      JSON.stringify(updatedReels)
-    );
+    setReels((previous) => [newReel, ...previous]);
 
     setForm({
       title: "",
@@ -336,9 +352,7 @@ function Admin() {
       coverImage: ""
     });
 
-    const fileInput =
-      document.getElementById("reelCover");
-
+    const fileInput = document.getElementById("reelCover");
     if (fileInput) {
       fileInput.value = "";
     }
@@ -350,7 +364,7 @@ function Admin() {
   // DELETE REEL
   // ==================================================
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this reel?"
     );
@@ -359,15 +373,20 @@ function Admin() {
       return;
     }
 
-    const updatedReels =
-      reels.filter((reel) => reel.id !== id);
+    const { error } = await supabase
+      .from("reels")
+      .delete()
+      .eq("id", id);
 
-    setReels(updatedReels);
+    if (error) {
+      console.error("Supabase reel delete error:", error);
+      alert(
+        `Reel could not be deleted.\n\n${error.message || "Unknown Supabase error"}`
+      );
+      return;
+    }
 
-    localStorage.setItem(
-      "fxReels",
-      JSON.stringify(updatedReels)
-    );
+    setReels((previous) => previous.filter((reel) => reel.id !== id));
   };
 
   // ==================================================
@@ -422,156 +441,124 @@ function Admin() {
   // SAVE PROFILE TO SUPABASE
   // ==================================================
 
-const handleSaveProfile = async (e) => {
-  e.preventDefault();
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
 
-  if (!profileForm.name.trim()) {
-    alert("Please enter your name.");
-    return;
-  }
+    if (!profileForm.name.trim()) {
+      alert("Please enter your name.");
+      return;
+    }
 
-  if (!profileForm.title.trim()) {
-    alert("Please enter profile title.");
-    return;
-  }
+    if (!profileForm.title.trim()) {
+      alert("Please enter profile title.");
+      return;
+    }
 
-  if (!profileForm.bio.trim()) {
-    alert("Please enter your bio.");
-    return;
-  }
+    if (!profileForm.bio.trim()) {
+      alert("Please enter your bio.");
+      return;
+    }
 
-  const updatedProfile = {
-    name: profileForm.name.trim(),
-    title: profileForm.title.trim(),
-    bio: profileForm.bio.trim(),
-    experience: profileForm.experience.trim(),
-    community: profileForm.community.trim(),
-    education_posts:
-      profileForm.educationPosts.trim(),
-    profile_image:
-      profileForm.profileImage || "",
-    updated_at: new Date().toISOString()
+    const updatedProfile = {
+      id: 1,
+      name: profileForm.name.trim(),
+      title: profileForm.title.trim(),
+      bio: profileForm.bio.trim(),
+      experience: profileForm.experience.trim(),
+      community: profileForm.community.trim(),
+      education_posts: profileForm.educationPosts.trim(),
+      profile_image: profileForm.profileImage || "",
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from("site_profile")
+      .upsert(updatedProfile, { onConflict: "id" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase profile save error:", error);
+      alert(
+        `Profile could not be saved.\n\n${error.message || "Unknown Supabase error"}`
+      );
+      return;
+    }
+
+    const savedProfile = {
+      name: data.name || defaultProfile.name,
+      title: data.title || defaultProfile.title,
+      bio: data.bio || defaultProfile.bio,
+      experience: data.experience || defaultProfile.experience,
+      community: data.community || defaultProfile.community,
+      educationPosts:
+        data.education_posts || defaultProfile.educationPosts,
+      profileImage: data.profile_image || ""
+    };
+
+    setProfile(savedProfile);
+    setProfileForm(savedProfile);
+
+    alert("Profile updated successfully!");
   };
-
-  console.log("Saving profile:", updatedProfile);
-
-  try {
-    // First try UPDATE
-    const { data: updateData, error: updateError } =
-      await supabase
-        .from("site_profile")
-        .update(updatedProfile)
-        .eq("id", 1)
-        .select();
-
-    console.log("Profile update response:", {
-      updateData,
-      updateError
-    });
-
-    if (updateError) {
-      console.error(
-        "Supabase UPDATE error:",
-        updateError
-      );
-
-      alert(
-        `Profile save failed.\n\n` +
-        `Code: ${updateError.code || "N/A"}\n` +
-        `Message: ${updateError.message || "Unknown error"}\n\n` +
-        `Check Supabase RLS policies.`
-      );
-
-      return;
-    }
-
-    // If row with id=1 exists, UPDATE succeeds
-    if (updateData && updateData.length > 0) {
-      setProfile({
-        ...profileForm
-      });
-
-      localStorage.setItem(
-        "fxProfile",
-        JSON.stringify(profileForm)
-      );
-
-      alert("Profile updated successfully!");
-      return;
-    }
-
-    // If id=1 does not exist, INSERT it
-    const { data: insertData, error: insertError } =
-      await supabase
-        .from("site_profile")
-        .insert({
-          id: 1,
-          ...updatedProfile
-        })
-        .select();
-
-    console.log("Profile insert response:", {
-      insertData,
-      insertError
-    });
-
-    if (insertError) {
-      console.error(
-        "Supabase INSERT error:",
-        insertError
-      );
-
-      alert(
-        `Profile creation failed.\n\n` +
-        `Code: ${insertError.code || "N/A"}\n` +
-        `Message: ${insertError.message || "Unknown error"}\n\n` +
-        `Check Supabase INSERT policy.`
-      );
-
-      return;
-    }
-
-    setProfile({
-      ...profileForm
-    });
-
-    localStorage.setItem(
-      "fxProfile",
-      JSON.stringify(profileForm)
-    );
-
-    alert("Profile saved successfully!");
-  } catch (error) {
-    console.error(
-      "Unexpected profile save error:",
-      error
-    );
-
-    alert(
-      `Unexpected error:\n\n${
-        error?.message || error
-      }`
-    );
-  }
-};
 
 
   // ==================================================
   // SAVE TRADING RESULTS
   // ==================================================
 
-  const handleSaveResults = (e) => {
+  const handleSaveResults = async (e) => {
     e.preventDefault();
 
-    localStorage.setItem(
-      "fxTradingResults",
-      JSON.stringify(tradingResults)
-    );
+    const payload = {
+      id: 1,
+      weekly_result: tradingResults.weekly.result.trim(),
+      weekly_win_rate: tradingResults.weekly.winRate.trim(),
+      weekly_total_trades: tradingResults.weekly.totalTrades.trim(),
+      monthly_result: tradingResults.monthly.result.trim(),
+      monthly_win_rate: tradingResults.monthly.winRate.trim(),
+      monthly_total_trades: tradingResults.monthly.totalTrades.trim(),
+      yearly_result: tradingResults.yearly.result.trim(),
+      yearly_win_rate: tradingResults.yearly.winRate.trim(),
+      yearly_total_trades: tradingResults.yearly.totalTrades.trim(),
+      updated_at: new Date().toISOString()
+    };
 
-    alert(
-      "Trading results updated successfully!"
-    );
+    const { data, error } = await supabase
+      .from("trading_results")
+      .upsert(payload, { onConflict: "id" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase trading results save error:", error);
+      alert(
+        `Trading results could not be saved.\n\n${error.message || "Unknown Supabase error"}`
+      );
+      return;
+    }
+
+    setTradingResults({
+      weekly: {
+        result: data.weekly_result || "",
+        winRate: data.weekly_win_rate || "",
+        totalTrades: data.weekly_total_trades || ""
+      },
+      monthly: {
+        result: data.monthly_result || "",
+        winRate: data.monthly_win_rate || "",
+        totalTrades: data.monthly_total_trades || ""
+      },
+      yearly: {
+        result: data.yearly_result || "",
+        winRate: data.yearly_win_rate || "",
+        totalTrades: data.yearly_total_trades || ""
+      }
+    });
+
+    alert("Trading results updated successfully!");
   };
+
 
   // ==================================================
   // COMMUNITY INPUT CHANGE
@@ -590,56 +577,69 @@ const handleSaveProfile = async (e) => {
   // SAVE COMMUNITY
   // ==================================================
 
-  const handleSaveCommunity = (e) => {
+  const handleSaveCommunity = async (e) => {
     e.preventDefault();
 
     if (!communityForm.eyebrow.trim()) {
-      alert(
-        "Please enter a community eyebrow."
-      );
+      alert("Please enter a community eyebrow.");
       return;
     }
 
     if (!communityForm.title.trim()) {
-      alert(
-        "Please enter a community title."
-      );
+      alert("Please enter a community title.");
       return;
     }
 
     if (!communityForm.description.trim()) {
-      alert(
-        "Please enter a community description."
-      );
+      alert("Please enter a community description.");
       return;
     }
 
     if (!communityForm.buttonText.trim()) {
+      alert("Please enter community button text.");
+      return;
+    }
+
+    const payload = {
+      id: 1,
+      eyebrow: communityForm.eyebrow.trim(),
+      title: communityForm.title.trim(),
+      highlight: communityForm.highlight.trim(),
+      description: communityForm.description.trim(),
+      button_text: communityForm.buttonText.trim(),
+      button_url: communityForm.buttonUrl.trim(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from("community")
+      .upsert(payload, { onConflict: "id" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase community save error:", error);
       alert(
-        "Please enter community button text."
+        `Community section could not be saved.\n\n${error.message || "Unknown Supabase error"}`
       );
       return;
     }
 
-    const updatedCommunity = {
-      ...communityForm
+    const savedCommunity = {
+      eyebrow: data.eyebrow || defaultCommunity.eyebrow,
+      title: data.title || defaultCommunity.title,
+      highlight: data.highlight || defaultCommunity.highlight,
+      description: data.description || defaultCommunity.description,
+      buttonText: data.button_text || defaultCommunity.buttonText,
+      buttonUrl: data.button_url || defaultCommunity.buttonUrl
     };
 
-    setCommunity(updatedCommunity);
+    setCommunity(savedCommunity);
+    setCommunityForm(savedCommunity);
 
-    localStorage.setItem(
-      "fxCommunity",
-      JSON.stringify(updatedCommunity)
-    );
-
-    window.dispatchEvent(
-      new Event("fxCommunityUpdated")
-    );
-
-    alert(
-      "Community section updated successfully!"
-    );
+    alert("Community section updated successfully!");
   };
+
 
   // ==================================================
   // ENQUIRIES
@@ -2315,4 +2315,3 @@ const handleSaveProfile = async (e) => {
 }
 
 export default Admin;
-

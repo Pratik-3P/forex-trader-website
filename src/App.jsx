@@ -102,128 +102,128 @@ function App() {
   // ==================================================
 
   useEffect(() => {
+    const loadSiteData = async () => {
+      try {
+        const [reelsResponse, profileResponse, resultsResponse, communityResponse] =
+          await Promise.all([
+            supabase
+              .from("reels")
+              .select("*")
+              .order("created_at", { ascending: false }),
 
-    // Load reels
-    const loadReels = () => {
+            supabase
+              .from("site_profile")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle(),
 
-      const savedReels =
-        JSON.parse(localStorage.getItem("fxReels")) || [];
+            supabase
+              .from("trading_results")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle(),
 
-      setReels(savedReels);
+            supabase
+              .from("community")
+              .select("*")
+              .eq("id", 1)
+              .maybeSingle()
+          ]);
 
-    };
-
-    // Load profile
-    const loadProfile = () => {
-
-      const savedProfile =
-        JSON.parse(localStorage.getItem("fxProfile"));
-
-      if (savedProfile) {
-        setProfile(savedProfile);
-      }
-
-    };
-
-    // Load community
-    const loadCommunity = () => {
-
-      const savedCommunity =
-        JSON.parse(localStorage.getItem("fxCommunity"));
-
-      if (savedCommunity) {
-        setCommunity({
-          ...defaultCommunity,
-          ...savedCommunity
-        });
-      } else {
-        setCommunity(defaultCommunity);
-      }
-
-    };
-
-    // Load trading results
-    const loadTradingResults = () => {
-
-      const savedResults =
-        JSON.parse(localStorage.getItem("fxTradingResults"));
-
-      if (savedResults) {
-
-        // Current format used by Admin.jsx
-        if (
-          savedResults.weekly &&
-          savedResults.monthly &&
-          savedResults.yearly
-        ) {
-          setTradingResults(savedResults);
-          return;
+        if (reelsResponse.error) {
+          console.error("Supabase reels load error:", reelsResponse.error);
+        } else {
+          setReels(
+            (reelsResponse.data || []).map((reel) => ({
+              id: reel.id,
+              title: reel.title || "",
+              category: reel.category || "Daily Market",
+              url: reel.url || "",
+              coverImage: reel.cover_image || "",
+              createdAt: reel.created_at
+                ? new Date(reel.created_at).toLocaleDateString()
+                : ""
+            }))
+          );
         }
 
-        // Backward compatibility
-        setTradingResults({
-          weekly: {
-            result: savedResults.weeklyResult || "+3.8%",
-            winRate: savedResults.winRate || "76%",
-            totalTrades: savedResults.totalTrades || "18"
-          },
+        if (profileResponse.error) {
+          console.error("Supabase profile load error:", profileResponse.error);
+        } else if (profileResponse.data) {
+          const data = profileResponse.data;
+          setProfile({
+            name: data.name || defaultProfile.name,
+            title: data.title || defaultProfile.title,
+            bio: data.bio || defaultProfile.bio,
+            experience: data.experience || defaultProfile.experience,
+            community: data.community || defaultProfile.community,
+            educationPosts:
+              data.education_posts || defaultProfile.educationPosts,
+            profileImage: data.profile_image || "",
+            instagramProfile: data.instagram_profile || ""
+          });
+        }
 
-          monthly: {
-            result: savedResults.monthlyResult || "+12.4%",
-            winRate: savedResults.winRate || "78%",
-            totalTrades: savedResults.totalTrades || "124"
-          },
+        if (resultsResponse.error) {
+          console.error(
+            "Supabase trading results load error:",
+            resultsResponse.error
+          );
+        } else if (resultsResponse.data) {
+          const data = resultsResponse.data;
+          setTradingResults({
+            weekly: {
+              result: data.weekly_result || defaultTradingResults.weekly.result,
+              winRate:
+                data.weekly_win_rate || defaultTradingResults.weekly.winRate,
+              totalTrades:
+                data.weekly_total_trades ||
+                defaultTradingResults.weekly.totalTrades
+            },
+            monthly: {
+              result:
+                data.monthly_result || defaultTradingResults.monthly.result,
+              winRate:
+                data.monthly_win_rate || defaultTradingResults.monthly.winRate,
+              totalTrades:
+                data.monthly_total_trades ||
+                defaultTradingResults.monthly.totalTrades
+            },
+            yearly: {
+              result: data.yearly_result || defaultTradingResults.yearly.result,
+              winRate:
+                data.yearly_win_rate || defaultTradingResults.yearly.winRate,
+              totalTrades:
+                data.yearly_total_trades ||
+                defaultTradingResults.yearly.totalTrades
+            }
+          });
+        }
 
-          yearly: {
-            result: savedResults.yearlyResult || "+48.6%",
-            winRate: savedResults.winRate || "81%",
-            totalTrades: savedResults.totalTrades || "520"
-          }
-        });
+        if (communityResponse.error) {
+          console.error(
+            "Supabase community load error:",
+            communityResponse.error
+          );
+        } else if (communityResponse.data) {
+          const data = communityResponse.data;
+          setCommunity({
+            eyebrow: data.eyebrow || defaultCommunity.eyebrow,
+            title: data.title || defaultCommunity.title,
+            highlight: data.highlight || defaultCommunity.highlight,
+            description: data.description || defaultCommunity.description,
+            buttonText: data.button_text || defaultCommunity.buttonText,
+            buttonUrl: data.button_url || defaultCommunity.buttonUrl
+          });
+        }
+      } catch (error) {
+        console.error("Supabase site data loading error:", error);
       }
-
     };
 
-    loadReels();
-    loadProfile();
-    loadCommunity();
-    loadTradingResults();
-
-    window.addEventListener("storage", loadReels);
-    window.addEventListener("storage", loadProfile);
-    window.addEventListener("storage", loadCommunity);
-    window.addEventListener("storage", loadTradingResults);
-
-    window.addEventListener(
-      "fxCommunityUpdated",
-      loadCommunity
-    );
-
-    window.addEventListener(
-      "fxTradingResultsUpdated",
-      loadTradingResults
-    );
-
-    return () => {
-
-      window.removeEventListener("storage", loadReels);
-      window.removeEventListener("storage", loadProfile);
-      window.removeEventListener("storage", loadCommunity);
-      window.removeEventListener("storage", loadTradingResults);
-
-      window.removeEventListener(
-        "fxCommunityUpdated",
-        loadCommunity
-      );
-
-      window.removeEventListener(
-        "fxTradingResultsUpdated",
-        loadTradingResults
-      );
-
-    };
-
+    loadSiteData();
   }, []);
+
 
   // ==================================================
   // OPEN 1K CONTACT FORM
