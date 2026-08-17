@@ -1926,3 +1926,423 @@ body {
   width: 0 !important;
   background: transparent !important;
 }
+
+/* ==================================================
+   FINAL RESPONSIVE SYSTEM
+   Royal Trader Admin Panel
+================================================== */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  border: 0;
+  text-align: left;
+  display: block;
+}
+
+.admin-page,
+.admin-main,
+.admin-section,
+.admin-sidebar {
+  min-width: 0;
+}
+
+.admin-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.admin-main {
+  box-sizing: border-box;
+}
+
+.admin-section {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.admin-section input,
+.admin-section textarea,
+.admin-section select,
+.admin-section button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-section input,
+.admin-section textarea,
+.admin-section select {
+  min-width: 0;
+}
+
+.admin-header > *,
+.profile-preview-card > *,
+.admin-reel-card > *,
+.trading-result-item > *,
+.enquiries-heading > * {
+  min-width: 0;
+}
+
+.admin-reel-details,
+.trading-result-info,
+.community-admin-card,
+.profile-preview-card,
+.enquiry-admin-card {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* DESKTOP: sidebar + content */
+@media (min-width: 1101px) {
+  .admin-sidebar {
+    width: 290px;
+  }
+
+  .admin-main {
+    width: calc(100% - 290px);
+    margin-left: 290px;
+  }
+}
+
+/* TABLET */
+@media (max-width: 1100px) and (min-width: 801px) {
+  .admin-sidebar {
+    width: 240px;
+    padding: 38px 20px 24px;
+  }
+
+  .admin-logo {
+    font-size: 27px;
+    margin-bottom: 40px;
+  }
+
+  .admin-menu-item {
+    padding: 15px 16px;
+    font-size: 14px;
+  }
+
+  .admin-main {
+    width: calc(100% - 240px);
+    margin-left: 240px;
+    padding: 45px 28px 60px;
+  }
+
+  .admin-header h1 {
+    font-size: 40px;
+  }
+
+  .admin-section {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  .results-grid,
+  .community-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reel-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-reel-card {
+    grid-template-columns: 90px minmax(0, 1fr) auto;
+  }
+
+  .trading-result-item {
+    grid-template-columns: minmax(150px, 1.2fr) repeat(3, minmax(70px, 1fr)) auto;
+    gap: 12px;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 800px) {
+  .admin-page {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-sidebar {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 22px 18px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-logo {
+    margin-bottom: 22px;
+    text-align: center;
+    font-size: 27px;
+  }
+
+  .admin-menu {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .admin-menu-item {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 10px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .admin-menu-item:hover {
+    transform: none;
+  }
+
+  .admin-logout {
+    margin-top: 16px;
+    padding: 13px 15px;
+  }
+
+  .admin-main {
+    width: 100%;
+    margin-left: 0;
+    padding: 32px 16px 50px;
+  }
+
+  .admin-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .admin-header h1 {
+    font-size: clamp(30px, 8vw, 38px);
+    overflow-wrap: anywhere;
+  }
+
+  .admin-section {
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .admin-stats,
+  .results-grid,
+  .community-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reel-form,
+  .profile-form,
+  .community-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-field.full-width,
+  .add-reel-button {
+    grid-column: auto;
+  }
+
+  .admin-reel-card {
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .admin-reel-thumb {
+    width: 80px;
+    height: 105px;
+  }
+
+  .admin-reel-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-reel-actions a,
+  .admin-reel-actions button {
+    width: 100%;
+  }
+
+  .profile-preview-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 22px;
+  }
+
+  .profile-preview-card p {
+    max-width: 100%;
+  }
+
+  .trading-result-item {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .trading-result-info:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .trading-result-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .trading-result-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .enquiries-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .enquiry-admin-summary {
+    flex-wrap: wrap;
+  }
+
+  .community-admin-overview {
+    width: 100%;
+  }
+}
+
+/* SMALL MOBILE */
+@media (max-width: 500px) {
+  .admin-sidebar {
+    padding: 18px 12px;
+  }
+
+  .admin-logo {
+    font-size: 24px;
+  }
+
+  .admin-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-menu-item {
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .admin-main {
+    padding: 26px 12px 40px;
+  }
+
+  .admin-section {
+    padding: 17px;
+  }
+
+  .admin-header h1 {
+    font-size: 29px;
+  }
+
+  .admin-small-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+  }
+
+  .admin-stat-card {
+    min-height: 120px;
+    padding: 20px;
+  }
+
+  .admin-stat-card strong {
+    font-size: 32px;
+  }
+
+  .admin-reel-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-reel-thumb {
+    width: 100%;
+    height: 180px;
+  }
+
+  .admin-reel-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trading-result-item {
+    grid-template-columns: 1fr;
+  }
+
+  .trading-result-info:first-child,
+  .trading-result-actions {
+    grid-column: auto;
+  }
+
+  .trading-result-actions {
+    width: 100%;
+  }
+
+  .trading-result-actions button {
+    width: 100%;
+  }
+
+  .profile-preview-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-preview-card h2 {
+    font-size: 24px;
+  }
+
+  .cover-upload-preview img {
+    width: min(180px, 100%);
+    height: auto;
+    aspect-ratio: 180 / 230;
+  }
+
+  .profile-upload-preview img {
+    width: 110px;
+    height: 110px;
+  }
+
+  .enquiry-admin-summary span,
+  .enquiry-admin-summary strong {
+    font-size: 10px;
+    padding: 7px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-main {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .admin-section {
+    padding: 14px;
+  }
+}
